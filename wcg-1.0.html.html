@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bulma y FontAwesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <title>Infratec - Asistente WireGuard Compacto v2.4.1</title> <!-- Versión incrementada -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <style>
+        /* --- ESTILOS CSS COMPLETOS (v2.4.1 - UI Enhancements + Fixes) --- */
+        :root {
+            --primary: #00d1b2; --primary-dark: #009e86; --primary-light: #67f0d6;
+            --dark-bg: #1a1a1a; --dark-card: #252525; --dark-text: #f5f5f5; --dark-border: #444;
+            --info: #3e8ed0; --danger: #f14668; --danger-dark: #d22d4f;
+            --warning-light: #fceed5; --whatsapp-color: #25D366; --telegram-color: #0088cc;
+            --slack-color: #4A154B; --email-color: #d44638;
+            --step-default-bg: #555; --step-default-border: #777; --step-text-light: #ccc;
+            --light-text: #f0f0f0; /* Texto más blanco */
+        }
+        html { scrollbar-color: var(--primary) #333; scrollbar-width: thin; }
+        body { background-color: var(--dark-bg); color: var(--dark-text); min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; display: flex; flex-direction: column; }
+        #app-wrapper { flex: 1; padding-top: 2rem; padding-bottom: 2rem; } /* Añadido padding bottom */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #333; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+
+        /* --- Asistente y Pasos --- */
+        .wizard-container { /* Contenedor para la transición */
+           min-height: 550px; /* Altura mínima para evitar saltos bruscos */
+        }
+        .wizard-step { background-color: var(--dark-card); padding: 2rem; border: 1px solid var(--dark-border); border-radius: 6px; margin-bottom: 1.5rem; min-height: 480px; display: flex; flex-direction: column; justify-content: space-between; }
+        .wizard-step-content { flex-grow: 1; }
+        .step-title { color: var(--primary); margin-bottom: 1.5rem; text-align: center; border-bottom: 1px solid var(--dark-border); padding-bottom: 1rem; }
+        .step-navigation { margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--dark-border); padding-top: 1.5rem;}
+        .step-navigation .button { min-width: 120px; }
+
+        /* --- Indicador de Pasos Gráfico --- */
+        .step-tracker { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 2.5rem; /* Más espacio */ padding: 0 1rem; flex-wrap: wrap; /* Permitir wrap en pantallas muy pequeñas */ }
+        .step-item { display: flex; flex-direction: column; align-items: center; position: relative; flex-grow: 1; flex-basis: 0; min-width: 80px; /* Ancho mínimo */ max-width: 120px; margin: 0 5px; /* Espacio entre items */ }
+        .step-item:not(:first-child)::before { /* Línea izquierda */ content: ''; position: absolute; top: 15px; right: 50%; height: 2px; width: calc(100% - 30px); /* Ajusta longitud línea */ background-color: var(--step-default-border); transform: translateX(calc(-15px - 5px)); /* Ajusta posición línea */ z-index: 1; transition: background-color 0.4s ease; }
+        /*.step-item:not(:last-child)::after {  Línea derecha (alternativa o combinada) } */
+        .step-circle { width: 30px; height: 30px; border-radius: 50%; background-color: var(--step-default-bg); border: 2px solid var(--step-default-border); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--dark-text); position: relative; z-index: 2; transition: all 0.4s ease; }
+        .step-label { margin-top: 0.75rem; font-size: 0.8rem; text-align: center; color: var(--step-text-light); transition: color 0.4s ease; white-space: normal; line-height: 1.2; }
+        .step-item.is-active .step-circle { background-color: var(--primary); border-color: var(--primary-dark); color: rgba(0,0,0,0.7); transform: scale(1.1); box-shadow: 0 0 10px rgba(0, 209, 178, 0.5); }
+        .step-item.is-active .step-label { color: var(--primary-light); font-weight: 600; }
+        .step-item.is-completed .step-circle { background-color: var(--primary-dark); border-color: var(--primary-dark); color: var(--dark-text); }
+        .step-item.is-completed .step-label { color: #bbb; }
+        /* Colorear línea cuando el paso ANTERIOR está completado */
+        .step-item.is-completed + .step-item::before { background-color: var(--primary-dark); }
+        /* Colorear línea cuando el paso ACTUAL está activo */
+        .step-item.is-active::before { background-color: var(--primary-dark); }
+
+
+        @media screen and (max-width: 768px) {
+            .step-label { font-size: 0.7rem; }
+            .step-circle { width: 25px; height: 25px; font-size: 0.8rem; }
+            .step-item:not(:first-child)::before { top: 12.5px; width: calc(100% - 25px); transform: translateX(calc(-12.5px - 5px));}
+            .step-tracker { margin-bottom: 1.5rem; }
+        }
+        @media screen and (max-width: 480px) {
+             .step-tracker { justify-content: space-around; } /* Mejor distribución en móviles */
+             .step-item { min-width: 60px; max-width: 80px; }
+        }
+
+
+        /* --- Transiciones entre Pasos --- */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease-out; }
+        .fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ { opacity: 0; }
+
+        #profileInput { display: none; }
+        .label { color: #ccc; font-weight: 600; margin-bottom: 0.75rem; display: block; }
+        .input, .input-edit { background-color: #333; border: 1px solid var(--dark-border); color: var(--dark-text); transition: all 0.3s ease; width: 100%; padding: calc(0.5em - 1px) calc(0.75em - 1px); font-size: inherit; border-radius: 4px; line-height: 1.5; }
+        .input:focus, .input-edit:focus { border-color: var(--primary); box-shadow: 0 0 0 0.125em rgba(0, 209, 178, 0.25); outline: none; }
+        .input::placeholder { color: #777; }
+        .input-edit { font-family: monospace; }
+        .control.has-icons-left .icon { height: 2.5em; width: 2.5em; pointer-events: none; }
+        .control.has-icons-left .input { padding-left: 2.5em; }
+        .config-block { overflow-x: auto; white-space: pre; background-color: #2a2a2a; padding: 1rem; border-radius: 4px; border-left: 3px solid var(--primary); margin-bottom: 1rem; max-height: 300px; font-family: Consolas, Monaco, monospace; font-size: 0.9em; }
+        code { color: #f8f8f2; background-color: transparent; padding: 0; font-size: inherit; }
+        pre { background-color: transparent; color: #f8f8f2; padding: 0; margin: 0; font-size: inherit; }
+        .qr-container { margin: 1rem auto; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: block; line-height: 0; position: relative; width: 100%; max-width: 280px; padding: 10px; /* Espacio para el QR */ }
+        .qr-code-placeholder { display: block; width: 100%; background-color: #eee; border-radius: 3px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9em; }
+        .qr-code-placeholder canvas { width: 100% !important; height: auto !important; display: block; border-radius: 3px; }
+        .qr-error-message { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: var(--danger); font-size: 0.9rem; font-weight: bold; background: rgba(255,255,255,0.8); padding: 10px; text-align: center; border-radius: 4px; }
+        .client-tabs .tabs a { padding: 0.75rem 1rem; }
+        .client-tabs .tab-content { background-color: #303030; padding: 1.5rem; border: 1px solid var(--dark-border); border-top: none; border-radius: 0 0 6px 6px; min-height: 340px; display: flex; flex-direction: column; justify-content: flex-start; }
+        .client-tabs .tab-content > div { width: 100%; }
+        .client-tabs .tab-content div[v-show="activeClient.activeTab === 'mobile'"] > .has-text-centered { margin-top: 1rem; }
+        .client-tabs .tab-content .buttons { margin-top: 1rem; justify-content: flex-end; }
+        .client-tabs li.is-active a { background-color: #303030; border-bottom-color: #303030 !important; color: var(--primary); font-weight: 600; }
+        .client-tabs a { color: #ccc; }
+        .client-tabs a:hover { color: var(--primary); border-bottom-color: var(--primary); }
+        .button { transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease; }
+        .button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); } /* Sombra al hover */
+        .button.is-primary { background-color: var(--primary); border-color: transparent; color: rgba(0,0,0,0.7); }
+        .button.is-primary:hover { background-color: var(--primary-dark); }
+        .button.is-warning { background-color: #ffdd57; border-color: transparent; color: rgba(0,0,0,0.7); }
+        .button.is-warning:hover { background-color: #ffcc4a; }
+        .button.is-info { background-color: var(--info); border-color: transparent; color: #fff; }
+        .button.is-info:hover { background-color: #3273dc; }
+        .button.is-link { background-color: #485fc7; border-color: transparent; color: #fff; }
+        .button.is-link:hover { background-color: #3a50b7; }
+        .button.is-danger { background-color: var(--danger); border-color: transparent; color: #fff; }
+        .button.is-danger:hover { background-color: var(--danger-dark); }
+        .button.is-light { background-color: #444; border-color: transparent; color: var(--dark-text); }
+        .button.is-light:hover { background-color: #555; }
+        .buttons .button { margin-bottom: 0.5rem; margin-left: 0.5rem; }
+        .buttons.is-justify-content-flex-end .button { margin-right: 0; margin-left: 0.5rem;}
+        .buttons.is-justify-content-flex-end .button:first-child { margin-left: 0; }
+
+        /* --- Tooltip Animado (Mejorado) --- */
+        .tooltip { position: relative; display: inline-block; vertical-align: middle; /* Alinea mejor con el texto */ }
+        .tooltip .tooltiptext {
+            visibility: hidden; min-width: 180px; max-width: 300px; /* Rango de anchos */
+            background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 10px 15px;
+            position: absolute; z-index: 10; bottom: 135%; /* Un poco más arriba */ left: 50%; transform: translateX(-50%); /* Centrado perfecto */
+            opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateX(-50%) translateY(10px); /* Estado inicial (abajo y centrado) */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 0.85rem; /* Ligeramente más pequeño */ line-height: 1.4;
+            pointer-events: none; white-space: normal; /* Permitir salto de línea */
+        }
+        .tooltip .tooltiptext::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #333 transparent transparent transparent; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); /* Estado final (normal y centrado) */ }
+        .help-icon { cursor: help; margin-left: 5px; color: var(--info); transition: transform 0.3s ease, color 0.3s ease; }
+        .help-icon:hover { transform: scale(1.1); color: var(--primary-light); }
+
+        .notification-container { position: fixed; bottom: 20px; right: 20px; z-index: 1001; width: 100%; max-width: 350px; pointer-events: none; }
+        .notification-container .notification { pointer-events: auto; margin-bottom: 1rem; }
+        .notification.is-custom { background-color: #333; color: var(--dark-text); border-left: 4px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 1rem 2.5rem 1rem 1.5rem; position: relative; word-wrap: break-word; }
+        .has-text-grey-light { color: #ccc !important; }
+        .button .icon:first-child:not(:last-child) { margin-left: -0.25rem; margin-right: 0.25rem;}
+        .button .icon:last-child:not(:first-child) { margin-left: 0.25rem; margin-right: -0.25rem;}
+        .is-hidden-mobile { display: none !important; }
+        @media screen and (min-width: 769px) { .is-hidden-mobile { display: inline-block !important; } /* Cambiado a inline-block */ .tabs a { padding: 0.75rem 1rem !important; } }
+        @media screen and (max-width: 768px) { .tabs a { padding: 0.5rem 0.5rem !important; font-size: 0.8rem; } .tabs .icon { margin: 0 !important; } .clients-table th, .clients-table td {padding: 0.5rem; font-size: 0.9em;} .share-cell .button { padding: 0.4em; } .share-cell .icon { font-size: 1rem; } .actions-cell .button { margin-left: 0.1rem; padding: 0.4em 0.6em;} }
+        .footer { background-color: var(--dark-card); border-top: 1px solid var(--dark-border); padding: 2rem 1.5rem; margin-top: auto; }
+
+        /* --- Estilos Tabla Clientes (Texto más blanco) --- */
+        .clients-table { width: 100%; background-color: var(--dark-card); border-collapse: collapse; margin-top: 1.5rem; border-radius: 4px; overflow: hidden; }
+        .clients-table th, .clients-table td { padding: 0.85rem 1.1rem; text-align: left; vertical-align: middle; border: none; border-bottom: 1px solid #3f3f3f; }
+        .clients-table th { background-color: #222; color: var(--primary); font-weight: 600; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8em; border-bottom: 2px solid var(--primary-dark); }
+        .clients-table td { vertical-align: middle; color: var(--light-text); /* Color de texto principal más blanco */ }
+        .clients-table .client-name-cell, .clients-table .client-ip-cell { cursor: pointer; }
+        .clients-table .client-name-cell strong { border-bottom: 1px dashed #666; padding-bottom: 1px; color: inherit; /* Hereda el blanco */ transition: border-color 0.2s ease; }
+        .clients-table .client-ip-cell span { border-bottom: 1px dashed #666; padding-bottom: 1px; transition: border-color 0.2s ease; }
+        .clients-table .client-name-cell:hover strong, .clients-table .client-ip-cell:hover span { border-bottom-color: var(--primary); }
+        .clients-table .client-ip span { font-family: monospace; font-size: 0.9em; color: #ddd; /* Ligeramente menos blanco para IP */ }
+        .clients-table tbody tr { background-color: var(--dark-card); transition: background-color 0.2s ease-out; }
+        .clients-table tbody tr:last-child td { border-bottom: none; }
+        .clients-table tbody tr:hover { background-color: #2e2e2e; }
+        .clients-table .actions-header { text-align: right; vertical-align: middle; }
+        .clients-table .actions-header span { margin-right: auto; }
+        .clients-table .actions-header .button { margin-left: 0.5rem; }
+        .clients-table .actions-cell { text-align: center; white-space: nowrap; }
+        .clients-table .actions-cell .buttons { margin-bottom: 0; justify-content: center; }
+        .clients-table .actions-cell .button { margin: 0 0.15rem; }
+        .share-cell { text-align: center; }
+        .share-cell .button { background: none; border: none; padding: 0.3em; margin: 0 0.15rem; cursor: pointer; transition: transform 0.2s ease, color 0.2s ease; }
+        .share-cell .button:hover { transform: scale(1.15); }
+        .share-cell .icon { font-size: 1.3rem; vertical-align: middle; color: #aaa; }
+        .share-whatsapp:hover .icon { color: var(--whatsapp-color); }
+        .share-telegram:hover .icon { color: var(--telegram-color); }
+        .share-slack:hover .icon { color: var(--slack-color); }
+        .share-email:hover .icon { color: var(--email-color); }
+
+        /* --- Estilos Modal (Sin cambios) --- */
+        .modal-background { background-color: rgba(10, 10, 10, 0.86); }
+        .modal-card { background-color: var(--dark-card); border: 1px solid var(--dark-border); color: var(--dark-text); max-width: 800px; border-radius: 6px; overflow: hidden; /* Evita que el contenido se salga */ }
+        .modal-card-head { background-color: #333; border-bottom: 1px solid var(--dark-border); border-radius: 6px 6px 0 0; }
+        .modal-card-title { color: var(--primary); }
+        .modal-card-foot { background-color: #333; border-top: 1px solid var(--dark-border); border-radius: 0 0 6px 6px; }
+        .modal-card-body { background-color: var(--dark-card); max-height: 70vh; overflow-y: auto; }
+        .modal-card-head .delete::before, .modal-card-head .delete::after { background-color: #ccc; }
+        .modal-card-head .delete:hover::before, .modal-card-head .delete:hover::after { background-color: #fff; }
+        .panel-heading { display: flex; justify-content: space-between; align-items: center; background-color: #222; /* Color cabecera panel */ color: var(--primary-light); border-radius: 4px 4px 0 0; padding: 0.75rem 1rem; }
+        .panel-heading > span { flex-grow: 1; font-weight: 600; }
+        .panel-block { background-color: var(--dark-card); border: 1px solid var(--dark-border); border-top: none; border-radius: 0 0 4px 4px; }
+        .image-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 250px; border: 2px dashed var(--dark-border); border-radius: 6px; background-color: #2a2a2a; color: #888; text-align: center; padding: 1rem; font-size: 0.9em; margin-top: 1rem; }
+        .summary-list { list-style: none; margin-left: 0; padding: 1rem; background-color: #303030; border-radius: 4px; }
+        .summary-list li { padding: 0.75rem 0; border-bottom: 1px solid var(--dark-border); }
+        .summary-list li:last-child { border-bottom: none; }
+        .summary-list strong { color: var(--primary); margin-right: 0.5rem; }
+        .summary-key { word-break: break-all; font-family: monospace; font-size: 0.85em; color: #ccc; background-color: #3a3a3a; padding: 2px 4px; border-radius: 3px; }
+
+        /* --- Animación Logo --- */
+        .animated-logo {
+            display: inline-block;
+            animation: pulseLogo 3s infinite ease-in-out;
+            max-width: 150px;
+            margin: 1rem auto;
+            vertical-align: middle; /* Mejor alineación */
+        }
+        @keyframes pulseLogo {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<div id="app-wrapper">
+    <section class="section">
+        <div id="app" class="container">
+            <!-- Notificaciones -->
+            <div class="notification-container">
+                <div v-for="n in notifications" :key="n.id" :class="['notification', 'is-custom', n.type]">
+                    <button class="delete" @click="dismissNotification(n.id)"></button>
+                    <span v-html="n.message"></span>
+                </div>
+            </div>
+
+            <!-- Indicador de Pasos Gráfico -->
+            <div class="step-tracker">
+                <div class="step-item" v-for="stepInfo in steps" :key="stepInfo.id"
+                     :class="{ 'is-active': currentStep === stepInfo.id, 'is-completed': currentStep > stepInfo.id }">
+                    <div class="step-circle">{{ stepInfo.id }}</div>
+                    <div class="step-label">{{ stepInfo.label }}</div>
+                </div>
+            </div>
+
+            <!-- Contenedor del Asistente con Transición -->
+            <transition name="fade" mode="out-in">
+                <div :key="currentStep" class="wizard-container"> <!-- :key es crucial para la transición -->
+
+                     <!-- PASO 1: Inicio -->
+                     <div class="wizard-step" v-if="currentStep === 1">
+                        <div class="wizard-step-content">
+                             <h3 class="title is-4 step-title">¡Bienvenido al Asistente WireGuard!</h3>
+                             <div class="content has-text-centered">
+                                 <p>Empieza un nuevo perfil o importa uno existente.</p>
+                                 <figure class="image is-inline-block" style="line-height: 0;"> <!-- Alineación logo -->
+                                     <img src="logo.png" alt="Logo Infratec">
+                                 </figure>
+                                 <p class="has-text-grey-light is-size-7 mt-4">Optimizado para MikroTik y gestión de múltiples clientes.</p>
+                             </div>
+                         </div>
+                         <div class="step-navigation">
+                              <button @click="triggerImport" class="button is-link is-medium">
+                                  <span class="icon"><i class="fas fa-file-import"></i></span>
+                                  <span>Importar Perfil</span>
+                              </button>
+                              <input type="file" ref="profileInput" @change="handleProfileImport" accept=".json" id="profileInput">
+                              <button @click="nextStep" class="button is-primary is-medium">
+                                  <span class="icon"><i class="fas fa-magic"></i></span>
+                                  <span>Nuevo Perfil</span>
+                              </button>
+                         </div>
+                    </div>
+
+                     <!-- PASO 2: Datos Servidor -->
+                     <div class="wizard-step" v-if="currentStep === 2">
+                          <h3 class="title is-4 step-title">Datos Servidor</h3>
+                          <div class="columns">
+                               <div class="column is-half">
+                                    <div class="field">
+                                         <label class="label">
+                                             Dirección
+                                             <span class="tooltip">
+                                                 <i class="fas fa-question-circle help-icon"></i>
+                                                 <span class="tooltiptext">Introduce la IP pública o el nombre de dominio (DNS) al que se conectarán los clientes WireGuard. Ejemplo: vpn.tuempresa.com</span>
+                                             </span>
+                                         </label>
+                                         <div class="control has-icons-left">
+                                             <input class="input" v-model.trim="server" placeholder="vpn.dominio.com | IP Pública" required>
+                                             <span class="icon is-small is-left"><i class="fas fa-globe"></i></span>
+                                         </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">
+                                            Puerto
+                                            <span class="tooltip">
+                                                <i class="fas fa-question-circle help-icon"></i>
+                                                <span class="tooltiptext">Puerto UDP que usará el servidor WireGuard para escuchar conexiones entrantes. El puerto por defecto es 51820. Asegúrate de que esté abierto en tu firewall.</span>
+                                            </span>
+                                        </label>
+                                         <div class="control has-icons-left">
+                                            <input class="input" v-model.number="port" type="number" placeholder="51820" min="1" max="65535" required>
+                                            <span class="icon is-small is-left"><i class="fas fa-plug"></i></span>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">
+                                            Nombre Interfaz Servidor
+                                            <span class="tooltip">
+                                                 <i class="fas fa-question-circle help-icon"></i>
+                                                 <span class="tooltiptext">Nombre que tendrá la interfaz WireGuard en el MikroTik servidor. Usa solo letras, números, guiones. Ej: wg-server, wireguard-vpn</span>
+                                            </span>
+                                        </label>
+                                         <div class="control has-icons-left">
+                                            <input class="input" v-model.trim="interfacename" placeholder="wg-server" required pattern="^[a-zA-Z0-9-_]+$">
+                                            <span class="icon is-small is-left"><i class="fas fa-network-wired"></i></span>
+                                         </div>
+                                         <p class="help is-grey-light is-size-7" v-if="interfacename && !/^[a-zA-Z0-9-_]+$/.test(interfacename)">Nombre inválido (solo letras, números, -, _)</p>
+                                    </div>
+                               </div>
+                               <div class="column is-half">
+                                    <div class="image-placeholder">
+                                         <span><i class="fas fa-server fa-3x mb-3 has-text-grey"></i><br>Estos datos definen cómo y dónde se conectarán los clientes a tu servidor MikroTik. El nombre de interfaz se usará para crear la interfaz WireGuard en el router.</span>
+                                    </div>
+                               </div>
+                          </div>
+                          <div class="step-navigation">
+                              <button @click="prevStep" class="button is-light"><i class="fas fa-arrow-left mr-1"></i>Anterior</button>
+                              <button @click="nextStep" class="button is-primary">Siguiente<i class="fas fa-arrow-right ml-1"></i></button>
+                          </div>
+                     </div>
+
+                     <!-- PASO 3: Red VPN -->
+                     <div class="wizard-step" v-if="currentStep === 3">
+                          <h3 class="title is-4 step-title">Red VPN</h3>
+                           <div class="columns">
+                                <div class="column is-half">
+                                    <div class="field">
+                                        <label class="label">
+                                            Red Base VPN
+                                            <span class="tooltip">
+                                                <i class="fas fa-question-circle help-icon"></i>
+                                                <span class="tooltiptext">Define la subred privada para la VPN. Introduce los primeros 3 octetos. El asistente asumirá una máscara /24. El servidor usará la IP .1 de esta red.</span>
+                                            </span>
+                                        </label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" v-model.trim="network" placeholder="10.100.50" pattern="^\d{1,3}\.\d{1,3}\.\d{1,3}$" required>
+                                            <span class="icon is-small is-left"><i class="fas fa-project-diagram"></i></span>
+                                        </div>
+                                        <p class="help is-grey">Ej: 10.8.0, 192.168.99</p>
+                                        <p class="help is-danger is-size-7" v-if="network && !/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(network)">Formato inválido (X.X.X).</p>
+                                    </div>
+                                    <div class="columns">
+                                         <div class="column is-half">
+                                            <div class="field">
+                                                <label class="label">
+                                                    IP Inicial Cliente
+                                                    <span class="tooltip">
+                                                        <i class="fas fa-question-circle help-icon"></i>
+                                                        <span class="tooltiptext">Número del último octeto para el *primer* cliente VPN. Debe ser entre 2 y 254.</span>
+                                                    </span>
+                                                </label>
+                                                <div class="control has-icons-left">
+                                                    <input class="input" v-model.number="startip" type="number" placeholder="2" min="2" max="254" required>
+                                                    <span class="icon is-small is-left"><i class="fas fa-sort-numeric-up"></i></span>
+                                                </div>
+                                                <p class="help is-grey">Normalmente 2.</p>
+                                            </div>
+                                         </div>
+                                         <div class="column is-half">
+                                            <div class="field">
+                                                <label class="label">
+                                                    N° Clientes Iniciales
+                                                    <span class="tooltip">
+                                                        <i class="fas fa-question-circle help-icon"></i>
+                                                        <span class="tooltiptext">¿Cuántos perfiles de cliente quieres generar inicialmente? Puedes añadir más después.</span>
+                                                    </span>
+                                                </label>
+                                                <div class="control has-icons-left">
+                                                    <input class="input" v-model.number="clientcount" type="number" placeholder="3" min="1" max="253" required> <!-- Max 253 = 254 - 1 (server) -->
+                                                    <span class="icon is-small is-left"><i class="fas fa-users"></i></span>
+                                                </div>
+                                                <p class="help is-grey">Generar ahora.</p>
+                                                <p class="help is-danger is-size-7" v-if="network && startip && clientcount && (startip + clientcount - 1 > 254)">¡Rango excede .254!</p>
+                                            </div>
+                                         </div>
+                                    </div>
+                                </div>
+                                <div class="column is-half">
+                                    <div class="image-placeholder">
+                                          <span><i class="fas fa-network-wired fa-3x mb-3 has-text-grey"></i><br>Define el rango de IPs privadas para la VPN.<br>Ej: Red <strong>{{ network || '10.100.50' }}.0/24</strong><br>Servidor: {{ network || '10.100.50' }}.1<br>Clientes desde: {{ network || '10.100.50' }}.{{ startip || 2 }}</span>
+                                    </div>
+                                </div>
+                           </div>
+                          <div class="step-navigation">
+                              <button @click="prevStep" class="button is-light"><i class="fas fa-arrow-left mr-1"></i>Anterior</button>
+                              <button @click="nextStep" class="button is-primary">Siguiente<i class="fas fa-arrow-right ml-1"></i></button>
+                          </div>
+                     </div>
+
+                     <!-- PASO 4: Configuración Clientes -->
+                     <div class="wizard-step" v-if="currentStep === 4">
+                          <h3 class="title is-4 step-title">Configuración Clientes</h3>
+                           <div class="columns">
+                               <div class="column is-half">
+                                    <div class="field">
+                                        <label class="label">
+                                            Servidores DNS para Clientes
+                                            <span class="tooltip">
+                                                <i class="fas fa-question-circle help-icon"></i>
+                                                <span class="tooltiptext">Servidores DNS que usarán los clientes cuando estén conectados a la VPN. Separa múltiples IPs con comas. Puedes usar IPs públicas (1.1.1.1) o IPs de tu red local (ej: IP del MikroTik).</span>
+                                            </span>
+                                        </label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" v-model.trim="dns" placeholder="1.1.1.1, 1.0.0.1" required>
+                                            <span class="icon is-small is-left"><i class="fas fa-search-location"></i></span>
+                                        </div>
+                                        <p class="help is-grey">Separados por comas. Ej: 8.8.8.8, 192.168.1.1</p>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">
+                                            Redes Permitidas (AllowedIPs Cliente)
+                                             <span class="tooltip">
+                                                <i class="fas fa-question-circle help-icon"></i>
+                                                <span class="tooltiptext">Define qué tráfico del *cliente* debe pasar por el túnel VPN hacia el servidor. Formato CIDR, separado por comas. '0.0.0.0/0, ::/0' envía TODO el tráfico (recomendado para acceso total). '192.168.1.0/24' enviaría solo tráfico a esa red LAN.</span>
+                                            </span>
+                                        </label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" v-model.trim="allowednets" placeholder="0.0.0.0/0, ::/0" required>
+                                            <span class="icon is-small is-left"><i class="fas fa-route"></i></span>
+                                        </div>
+                                        <p class="help is-grey">Separadas por comas (formato CIDR). 0.0.0.0/0 para todo.</p>
+                                    </div>
+                               </div>
+                                <div class="column is-half">
+                                    <div class="image-placeholder">
+                                          <span><i class="fas fa-traffic-light fa-3x mb-3 has-text-grey"></i><br>AllowedIPs en el cliente controla qué tráfico se *envía* por la VPN.<br><code>0.0.0.0/0</code> (Full Tunnel): Todo el tráfico del cliente (internet, LAN) pasa por el servidor VPN.<br><code>192.168.1.0/24, 10.0.0.0/8</code> (Split Tunnel): Solo el tráfico hacia esas redes específicas pasa por la VPN.</span>
+                                    </div>
+                                </div>
+                           </div>
+                          <div class="step-navigation">
+                              <button @click="prevStep" class="button is-light"><i class="fas fa-arrow-left mr-1"></i>Anterior</button>
+                              <button @click="nextStep" class="button is-primary">Siguiente<i class="fas fa-arrow-right ml-1"></i></button>
+                          </div>
+                     </div>
+
+                     <!-- PASO 5: Llaves Servidor -->
+                     <div class="wizard-step" v-if="currentStep === 5">
+                          <h3 class="title is-4 step-title">Llaves Servidor</h3>
+                          <div class="columns">
+                                <div class="column is-half">
+                                    <p class="has-text-grey-light mb-4 ">Genera nuevas llaves criptográficas para el servidor o pega una llave privada existente. La llave pública correspondiente se calculará automáticamente.</p>
+                                    <div class="field mt-5">
+                                        <label class="label">
+                                            Llave Privada Servidor
+                                            <span class="tooltip">
+                                                <i class="fas fa-question-circle help-icon"></i>
+                                                <span class="tooltiptext">¡Esta es la llave secreta de tu servidor! Guárdala bien. Puedes generar una nueva o pegar una existente (formato Base64, 44 caracteres terminando en '=').</span>
+                                            </span>
+                                        </label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" v-model.trim="serverkeys.privateKey" placeholder="Pega tu llave privada o genera una nueva" required>
+                                            <span class="icon is-small is-left"><i class="fas fa-key"></i></span>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">
+                                            Llave Pública Servidor
+                                            <span class="tooltip">
+                                                <i class="fas fa-question-circle help-icon"></i>
+                                                <span class="tooltiptext">Esta llave se deriva de la privada y es la que se comparte con los clientes para que puedan autenticar al servidor. Es de solo lectura.</span>
+                                            </span>
+                                        </label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" v-model="serverkeys.publicKey" readonly style="background:#444; cursor:not-allowed;" placeholder="(Se calcula automáticamente)">
+                                            <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                                        </div>
+                                         <p class="help is-danger is-size-7" v-if="serverkeys.privateKey && (!serverkeys.publicKey || serverkeys.publicKey.startsWith('Error') || serverkeys.publicKey.startsWith('Llave'))">Llave privada parece inválida.</p>
+                                    </div>
+                                    <div class="has-text-centered mt-5">
+                                        <button type="button" class="button is-info is-light" @click="generateServerKeys">
+                                            <span class="icon"><i class="fas fa-sync-alt"></i></span>
+                                            <span>Generar Nuevas Llaves</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="column is-half">
+                                     <div class="image-placeholder">
+                                        <span>
+                                            <img src="wg-private.png" alt="Seguridad de la llave privada" style="max-width: 120px; margin-bottom:15px;">
+                                            <br>¡La llave privada es confidencial! Trátala como una contraseña maestra.<br>La llave pública es segura para compartir.
+                                        </span>
+                                        </div>
+                                </div>
+                          </div>
+                          <div class="step-navigation">
+                              <button @click="prevStep" class="button is-light"><i class="fas fa-arrow-left mr-1"></i>Anterior</button>
+                              <button @click="nextStep" class="button is-primary">Siguiente (Resumen)<i class="fas fa-arrow-right ml-1"></i></button>
+                          </div>
+                     </div>
+
+                     <!-- PASO 6: Resumen -->
+                    <div class="wizard-step" v-if="currentStep === 6">
+                        <h3 class="title is-4 step-title">Resumen de Configuración</h3>
+                        <div class="content">
+                            <p class="has-text-centered has-text-grey-light mb-5">Verifica todos los datos introducidos antes de proceder a generar las configuraciones finales.</p>
+                            <ul class="summary-list">
+                                <li><strong>Servidor:</strong> {{ server || '-' }} : {{ port || '-' }}</li>
+                                <li><strong>Interfaz Servidor:</strong> {{ interfacename || '-' }}</li>
+                                <li><strong>Red VPN:</strong> {{ network || '-' }}.0/24</li>
+                                <li><strong>Rango Clientes:</strong> {{ network || '-' }}.{{ startip || '?' }} - {{ network || '?' }}.{{ (startip || 0) + (clientcount || 1) - 1 }} ({{ clientcount || '?' }} iniciales)</li>
+                                <li><strong>DNS Clientes:</strong> {{ dns || '-' }}</li>
+                                <li><strong>Redes Permitidas (Cliente):</strong> {{ allowednets || '-' }}</li>
+                                <li><strong>Llave Pública Servidor:</strong> <span class="summary-key">{{ serverkeys.publicKey || ' (No generada o inválida)' }}</span></li>
+                            </ul>
+                            <p class="has-text-centered has-text-grey mt-5 is-size-7">Si algo no es correcto, puedes usar el botón "Anterior" para volver y corregirlo.</p>
+                        </div>
+                        <div class="step-navigation">
+                            <button @click="prevStep" class="button is-light"><i class="fas fa-arrow-left mr-1"></i>Anterior</button>
+                            <button @click="generateAndProceed" class="button is-primary" :disabled="isLoading || !isSummaryValid" :class="{'is-loading': isLoading}">
+                                <span class="icon"><i class="fas fa-cogs"></i></span>
+                                <span>{{ isLoading ? 'Generando...' : 'Generar Configs' }}</span>
+                            </button>
+                        </div>
+                         <p class="help is-danger has-text-centered mt-2" v-if="!isSummaryValid">Faltan datos clave o son inválidos (revisa pasos anteriores).</p>
+                    </div>
+
+                    <!-- PASO 7: Resultados -->
+                    <div class="wizard-step" v-if="currentStep === 7">
+                        <div class="wizard-step-content">
+                             <h3 class="title is-4 step-title">¡Configuraciones Generadas!</h3>
+                             <!-- Acciones Globales -->
+                             <div class="box step-box mb-5" style="background-color: #303030; border: 1px solid var(--dark-border);">
+                                  <h4 class="title is-5 has-text-primary"><i class="fas fa-cogs mr-2"></i>Acciones Globales</h4>
+                                  <div class="buttons are-small"> <!-- Botones más pequeños aquí -->
+                                       <button type="button" class="button is-success" @click="saveProfile"><i class="fas fa-save mr-1"></i>Guardar Perfil (.json)</button>
+                                       <button type="button" class="button is-warning" @click="downloadAllZip" :disabled="isLoading || Object.keys(clients).length === 0" :class="{'is-loading': isLoading}"><i class="fas fa-file-archive mr-1"></i>Descargar ZIP Completo</button>
+                                       <button type="button" class="button is-link" @click="downloadServerPeersScript" :disabled="Object.keys(clients).length === 0"><i class="fas fa-users-cog mr-1"></i>Peers Servidor (.rsc)</button>
+                                  </div>
+                             </div>
+                             <!-- Script Servidor -->
+                             <div class="panel mt-5" v-if="serverConfigMikrotik">
+                                  <div class="panel-heading"><span><i class="fas fa-terminal mr-2"></i>Configuración Servidor MikroTik</span></div>
+                                  <div class="panel-block" style="padding: 1.25rem;">
+                                      <div class="content" style="width:100%">
+                                          <p class="has-text-grey-light is-size-7">Script completo para <strong>{{ server }}</strong> (interfaz <strong>{{ interfacename }}</strong>, incluye todos los peers actuales):</p>
+                                          <div class="config-block">
+                                              <pre><code ref="serverConfigCode" @click="select">{{ serverConfigMikrotik }}</code></pre>
+                                          </div>
+                                          <div class="buttons is-right mt-2">
+                                             <button class="button is-small is-light" @click="copyServerConfig"><i class="fas fa-copy mr-1"></i>Copiar Script Completo</button>
+                                          </div>
+                                      </div>
+                                   </div>
+                             </div>
+                             <!-- Tabla Clientes -->
+                             <div class="panel mt-5">
+                                 <div class="panel-heading">
+                                     <span><i class="fas fa-user-friends mr-2"></i>Clientes WireGuard</span>
+                                      <button class="button is-primary is-small" @click="addNewClient" title="Añadir nuevo cliente">
+                                            <span class="icon"><i class="fas fa-plus"></i></span>
+                                            <span class="is-hidden-mobile">Añadir Cliente</span>
+                                      </button>
+                                 </div>
+                                 <div class="panel-block" style="display: block; padding: 0; overflow-x: auto;">
+                                    <div v-if="sortedClients.length === 0" class="notification is-light m-4" style="background-color: #333; border-left: 3px solid var(--info);">No hay clientes definidos. Pulsa el botón (+) para añadir uno nuevo.</div>
+                                    <!-- Tabla de Clientes -->
+                                    <table v-else class="table is-fullwidth is-hoverable clients-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre</th> <th>IP VPN</th> <th class="share-col-header has-text-centered">Compartir</th>
+                                                <th class="actions-header has-text-centered">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="client in sortedClients" :key="client.ipSuffix">
+                                                <!-- Nombre Cliente -->
+                                                <td class="client-name-cell" @click="startEditingName(client.ipSuffix)" :title="'Click para editar nombre: ' + client.name">
+                                                    <span v-if="editingClientSuffix !== client.ipSuffix"><strong>{{ client.name }}</strong></span>
+                                                    <input v-else type="text" class="input is-small input-edit"
+                                                           v-model="editingClientName"
+                                                           @blur="saveNameEdit(client.ipSuffix)"
+                                                           @keyup.enter="saveNameEdit(client.ipSuffix)"
+                                                           @keyup.esc="cancelNameEdit"
+                                                           :ref="'clientNameInput_' + client.ipSuffix"
+                                                           maxlength="50">
+                                                </td>
+                                                <!-- IP Cliente -->
+                                                <td class="client-ip-cell" @click="startEditingIp(client.ipSuffix)" :title="'Click para editar IP: ' + network + '.' + client.ipSuffix">
+                                                    <span v-if="editingClientIpSuffix !== client.ipSuffix" class="client-ip">{{ network }}.{{ client.ipSuffix }}</span>
+                                                    <input v-else type="number" class="input is-small input-edit" style="width: 60px; padding: 0.2em 0.4em;"
+                                                           v-model.number="editingClientIpValue"
+                                                           @blur="saveIpEdit(client.ipSuffix)"
+                                                           @keyup.enter="saveIpEdit(client.ipSuffix)"
+                                                           @keyup.esc="cancelIpEdit"
+                                                           :ref="'clientIpInput_' + client.ipSuffix"
+                                                           min="2" max="254">
+                                                </td>
+                                                <!-- Compartir -->
+                                                <td class="share-cell">
+                                                    <div class="buttons are-small is-centered" style="margin-bottom: 0;">
+                                                        <button class="button share-whatsapp" @click.prevent="shareViaWhatsapp(client.ipSuffix)" title="WhatsApp"><span class="icon"><i class="fab fa-whatsapp"></i></span></button>
+                                                        <button class="button share-telegram" @click.prevent="shareViaTelegram(client.ipSuffix)" title="Telegram"><span class="icon"><i class="fab fa-telegram-plane"></i></span></button>
+                                                        <button class="button share-slack" @click.prevent="shareViaSlack(client.ipSuffix)" title="Slack (Copiar Texto)"><span class="icon"><i class="fab fa-slack"></i></span></button>
+                                                        <a class="button share-email" :href="generateMailtoLink(client.ipSuffix)" target="_blank" title="Email"><span class="icon"><i class="fas fa-envelope"></i></span></a>
+                                                    </div>
+                                                </td>
+                                                <!-- Acciones Cliente -->
+                                                <td class="actions-cell">
+                                                    <div class="buttons are-small is-centered">
+                                                        <button class="button is-info is-small" @click="showClientModal(client.ipSuffix)" title="Ver Detalles (QR, .conf, .rsc)"><span class="icon"><i class="fas fa-eye"></i></span></button>
+                                                        <button class="button is-warning is-small" @click="downloadSingleClientZip(client.ipSuffix)" title="Descargar ZIP del Cliente"><span class="icon"><i class="fas fa-download"></i></span></button>
+                                                        <button class="button is-link is-small" @click="showNewPeerConfigModal(client.ipSuffix)" title="Ver Config. Peer para Servidor"><span class="icon"><i class="fas fa-server"></i></span></button>
+                                                        <button class="button is-danger is-small" @click="confirmDeleteClient(client.ipSuffix)" title="Eliminar Cliente"><span class="icon"><i class="fas fa-trash-alt"></i></span></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                 </div>
+                             </div>
+                        </div>
+                        <!-- Navegación Final -->
+                        <div class="step-navigation has-text-centered" style="justify-content: center;"> <!-- Centrado -->
+                            <button @click="startOver" class="button is-info is-light is-medium">
+                                <span class="icon"><i class="fas fa-redo"></i></span>
+                                <span>Empezar de Nuevo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- Fin .wizard-container -->
+            </transition><!-- Fin transition -->
+
+             <!-- ===== MODALES ===== -->
+
+             <!-- Modal Detalles Cliente -->
+             <div class="modal" :class="{'is-active': activeModalClientSuffix !== null}">
+                 <div class="modal-background" @click="closeClientModal"></div>
+                 <div class="modal-card">
+                     <header class="modal-card-head">
+                         <p class="modal-card-title">Detalles Cliente: {{ activeClient ? activeClient.name : '' }} ({{ activeClient ? network + '.' + activeModalClientSuffix : '' }})</p>
+                         <button class="delete" aria-label="close" @click="closeClientModal"></button>
+                     </header>
+                     <section class="modal-card-body">
+                         <div v-if="activeClient" class="client-tabs">
+                             <!-- Pestañas -->
+                             <div class="tabs is-boxed">
+                                 <ul>
+                                     <li :class="{'is-active': activeClient.activeTab === 'mobile'}" @click.prevent="switchTab(activeModalClientSuffix, 'mobile')"><a><i class="fas fa-qrcode mr-1"></i><span class="is-hidden-mobile">Móvil (QR)</span></a></li>
+                                     <li :class="{'is-active': activeClient.activeTab === 'desktop'}" @click.prevent="switchTab(activeModalClientSuffix, 'desktop')"><a><i class="fas fa-desktop mr-1"></i><span class="is-hidden-mobile">Desktop (.conf)</span></a></li>
+                                     <li :class="{'is-active': activeClient.activeTab === 'mikrotik'}" @click.prevent="switchTab(activeModalClientSuffix, 'mikrotik')"><a><i class="fas fa-router mr-1"></i><span class="is-hidden-mobile">MikroTik Cliente (.rsc)</span></a></li>
+                                 </ul>
+                             </div>
+                             <!-- Contenido Pestañas -->
+                             <div class="tab-content">
+                                 <!-- Pestaña Móvil (QR) -->
+                                 <div v-show="activeClient.activeTab === 'mobile'">
+                                     <div class="has-text-centered">
+                                         <p class="is-size-7 has-text-grey-light mb-3">Escanea este código QR con la aplicación oficial de WireGuard en tu dispositivo móvil.</p>
+                                         <div class="qr-container">
+                                             <div class="qr-code-placeholder" :id="'qrModalContainer'+activeModalClientSuffix">Generando QR...</div>
+                                         </div>
+                                         <div>
+                                             <button class="button is-small is-info mt-4" @click="downloadSingleQR(activeModalClientSuffix)"><i class="fas fa-download mr-1"></i>Descargar Imagen QR (.png)</button>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <!-- Pestaña Desktop (.conf) -->
+                                 <div v-show="activeClient.activeTab === 'desktop'">
+                                     <div>
+                                         <p class="is-size-7 has-text-grey-light mb-2">Guarda este contenido como un archivo con extensión <code>.conf</code> (ej: <code>{{ activeClient.name.replace(/[^a-zA-Z0-9-_]/g, '_') }}.conf</code>) e impórtalo en el cliente WireGuard de escritorio.</p>
+                                         <div class="config-block" style="max-height: 350px;"> <!-- Más altura aquí -->
+                                             <pre><code @click="select">{{ generateClientConfContent(activeModalClientSuffix) }}</code></pre>
+                                         </div>
+                                         <div class="buttons is-justify-content-flex-end mt-3">
+                                             <button class="button is-small is-light" @click="copyClientConf(activeModalClientSuffix)"><i class="fas fa-copy mr-1"></i>Copiar Texto</button>
+                                             <button class="button is-small is-info" @click="downloadSingleConf(activeModalClientSuffix)"><i class="fas fa-download mr-1"></i>Descargar .conf</button>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <!-- Pestaña MikroTik Cliente (.rsc) -->
+                                 <div v-show="activeClient.activeTab === 'mikrotik'">
+                                     <div>
+                                         <p class="is-size-7 has-text-grey-light mb-2">Copia y pega este script en la terminal de New Terminal del <strong>router MikroTik que actuará como cliente</strong> de esta VPN.</p>
+                                         <div class="config-block" style="max-height: 350px;">
+                                             <pre><code @click="select">{{ generateMikrotikClientScript(activeModalClientSuffix) }}</code></pre>
+                                         </div>
+                                         <div class="buttons is-justify-content-flex-end mt-3">
+                                             <button class="button is-small is-light" @click="copyMikrotikScript(activeModalClientSuffix)"><i class="fas fa-copy mr-1"></i>Copiar Script</button>
+                                             <button class="button is-small is-link" @click="downloadSingleMikrotikScript(activeModalClientSuffix)"><i class="fas fa-download mr-1"></i>Descargar .rsc</button>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                         <div v-else> <!-- Mensaje si no hay cliente activo (error) -->
+                             <p class="has-text-centered has-text-danger">Error al cargar los datos del cliente.</p>
+                         </div>
+                     </section>
+                     <footer class="modal-card-foot is-justify-content-flex-end">
+                         <button class="button is-light" @click="closeClientModal">Cerrar</button>
+                     </footer>
+                 </div>
+             </div>
+
+             <!-- Modal Config Peer Servidor -->
+             <div class="modal" :class="{'is-active': showAddClientModal}">
+                 <div class="modal-background" @click="showAddClientModal = false"></div>
+                 <div class="modal-card">
+                     <header class="modal-card-head">
+                         <p class="modal-card-title"><i class="fas fa-user-plus mr-2"></i>Configuración Peer para Servidor</p>
+                         <button class="delete" aria-label="close" @click="showAddClientModal = false"></button>
+                     </header>
+                     <section class="modal-card-body">
+                         <p class="mb-3">Esta es la configuración necesaria en el <strong>servidor MikroTik ({{ server }})</strong> para permitir la conexión del cliente <strong>{{ newlyAddedClientInfo }}</strong>.</p>
+                         <p class="mb-3 has-text-grey-light is-size-7">Copia y pega la siguiente línea en la sección <code>/interface wireguard peers</code> de la terminal de tu servidor, o verifica que exista si ya la añadiste previamente:</p>
+                         <div class="config-block">
+                             <pre><code ref="newPeerConfigCode" @click="select">{{ newPeerConfigText }}</code></pre>
+                         </div>
+                         <p class="mt-4 has-text-grey-light is-size-7">Recuerda: El script completo del servidor (en el panel de Resultados) también ha sido actualizado para incluir a este cliente.</p>
+                     </section>
+                     <footer class="modal-card-foot is-justify-content-flex-end">
+                         <button class="button is-light" @click="copyNewPeerConfig"><span class="icon"><i class="fas fa-copy"></i></span><span>Copiar Config Peer</span></button>
+                         <button class="button is-primary" @click="showAddClientModal = false">Cerrar</button>
+                     </footer>
+                 </div>
+             </div>
+
+            <!-- Disclaimer -->
+            <div class="notification is-warning is-light mt-6" style="background-color: #4a412a; color: var(--warning-light); border: 1px solid #8a7445;">
+                <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
+                <strong>Nota de Seguridad Importante:</strong> Toda la generación de llaves y configuraciones se realiza <strong>localmente en tu navegador</strong>. Ningún dato sensible se envía a servidores externos. Guarda los perfiles exportados (.json) y las llaves privadas en un lugar seguro y confidencial.
+            </div>
+        </div><!-- Fin #app -->
+    </section>
+</div> <!-- Fin #app-wrapper -->
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="content has-text-centered has-text-grey-light">
+        <p>
+            <strong>Asistente WireGuard Compacto</strong> v2.4.1 por
+            <a href="https://infratec.networks" target="_blank" rel="noopener noreferrer">Infratec Networks</a>.
+        </p>
+        <p class="is-size-7">
+            Impulsado por Vue.js, Bulma, kjua, JSZip, FileSaver.js.<br>
+            WireGuard® es una marca registrada de Jason A. Donenfeld.
+        </p>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/vue@2.6.14/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<!-- ¡ASEGÚRATE QUE ESTE ARCHIVO EXISTA Y SEA FUNCIONAL! -->
+<script src="wireguard.js"></script>
+
+<script>
+    // ==============================================
+    //  LÓGICA DE VUE v2.4.1 (UI Enhancements + Fixes)
+    // ==============================================
+    new Vue({
+        el: "#app",
+        data() {
+             return {
+                 // --- Datos del Formulario del Asistente ---
+                 server: "vpn.yournet.it", // Valor por defecto
+                 port: 51820,             // Valor por defecto
+                 interfacename: "wg-server", // Valor por defecto
+                 network: "10.100.50",    // Valor por defecto
+                 startip: 2,              // Valor por defecto
+                 clientcount: 3,          // Valor por defecto
+                 dns: "1.1.1.1, 1.0.0.1", // Valor por defecto
+                 allowednets: "0.0.0.0/0, ::/0", // Valor por defecto
+                 serverkeys: { privateKey: '', publicKey: '' }, // Llaves del servidor
+
+                 // --- Datos Generados y de Estado Interno ---
+                 clients: {}, // Objeto para almacenar datos de clientes { ipSuffix: { name, privateKey, publicKey, preSharedKey, activeTab } }
+                 isLoading: false, // Indicador para operaciones largas (ZIP, generación)
+                 notifications: [], // Array para notificaciones al usuario
+                 serverConfigMikrotik: '', // Script completo generado para el servidor
+
+                 // --- Estado de la Interfaz de Usuario (UI) ---
+                 currentStep: 1, // Paso actual del asistente
+                 totalSteps: 7,  // Número total de pasos
+                 // Información para el Indicador de Pasos Gráfico
+                 steps: [
+                     { id: 1, label: 'Inicio' },
+                     { id: 2, label: 'Servidor' },
+                     { id: 3, label: 'Red VPN' },
+                     { id: 4, label: 'Clientes' },
+                     { id: 5, label: 'Llaves Serv.' },
+                     { id: 6, label: 'Resumen' },
+                     { id: 7, label: 'Resultados' }
+                 ],
+                 profileLoaded: false, // Flag para saber si se cargó un perfil
+                 // Estado de los Modales
+                 activeModalClientSuffix: null, // IP Suffix del cliente cuyo modal está activo
+                 showAddClientModal: false, // Flag para mostrar modal de config peer
+                 newPeerConfigText: '', // Texto para el modal de config peer
+                 newlyAddedClientInfo: '', // Nombre e IP para el modal de config peer
+                 // Estado para Edición Inline en la Tabla
+                 editingClientSuffix: null, // IP Suffix del cliente cuyo nombre se edita
+                 editingClientName: '', // Nombre temporal durante la edición
+                 editingClientIpSuffix: null, // IP Suffix del cliente cuya IP se edita
+                 editingClientIpValue: null, // Valor IP temporal durante la edición
+             };
+        },
+        computed: {
+            // Cliente activo para el modal de detalles
+            activeClient() {
+                if (this.activeModalClientSuffix !== null && this.clients[this.activeModalClientSuffix]) {
+                    return this.clients[this.activeModalClientSuffix];
+                }
+                return null; // Retorna null si no hay cliente activo o no se encuentra
+            },
+            // Array de clientes ordenado por IP para mostrar en la tabla
+            sortedClients() {
+                return Object.entries(this.clients)
+                       .map(([ipSuffix, clientData]) => ({
+                           ...clientData,
+                           ipSuffix: parseInt(ipSuffix) // Asegura que el suffix sea número
+                       }))
+                       .sort((a, b) => a.ipSuffix - b.ipSuffix); // Ordena numéricamente
+            },
+            // Comprueba si los datos del resumen son válidos para permitir la generación
+            isSummaryValid() {
+                 return this.server && this.port && this.interfacename &&
+                        this.network && this.startip && this.clientcount &&
+                        this.dns && this.allowednets &&
+                        this.serverkeys.publicKey && !this.serverkeys.publicKey.startsWith('Error') && !this.serverkeys.publicKey.startsWith('Llave');
+            }
+        },
+        methods: {
+            // -------------------------------------
+            // --- Navegación y Reset del Asistente ---
+            // -------------------------------------
+            nextStep() {
+                // Solo avanza si el paso actual es válido y no es el último
+                if (this.validateCurrentStep() && this.currentStep < this.totalSteps) {
+                    this.currentStep++;
+                    window.scrollTo(0, 0); // Scroll al inicio de la página
+                }
+            },
+            prevStep() {
+                // Solo retrocede si no es el primer paso
+                if (this.currentStep > 1) {
+                    this.currentStep--;
+                    window.scrollTo(0, 0); // Scroll al inicio de la página
+                }
+            },
+            goToStep(step) {
+                // Permite ir a un paso específico (usado por ej. al importar)
+                if (step >= 1 && step <= this.totalSteps) {
+                    this.currentStep = step;
+                    window.scrollTo(0, 0); // Scroll al inicio de la página
+                }
+            },
+            startOver() {
+                // Resetea todos los datos a sus valores iniciales definidos en data()
+                Object.assign(this.$data, this.$options.data.apply(this));
+                // Regenera llaves de servidor silenciosamente al reiniciar
+                this.generateServerKeys(true);
+                this.currentStep = 1; // Vuelve al primer paso
+                this.$nextTick(() => this.showNotification("Asistente reiniciado. Puedes empezar de nuevo.", "is-info"));
+            },
+
+            // -------------------------------------
+            // --- Validación de Pasos ---
+            // -------------------------------------
+            validateCurrentStep() {
+                let errors = [];
+                const ipRegex = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+                const domainRegex = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                const networkBaseRegex = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+                const interfaceNameRegex = /^[a-zA-Z0-9-_]+$/;
+                 // Expresión más permisiva para CIDR (IPv4 e IPv6)
+                const cidrRegex = /^[0-9a-fA-F:.\/]+$/;
+                const wgKeyRegex = /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/; // Regex más estricta para llave WG
+
+                switch (this.currentStep) {
+                    case 2: // Datos Servidor
+                        if (!this.server || !(ipRegex.test(this.server) || domainRegex.test(this.server))) errors.push("Dirección del Servidor inválida.");
+                        if (!this.port || this.port < 1 || this.port > 65535) errors.push("Puerto inválido (1-65535).");
+                        if (!this.interfacename || !interfaceNameRegex.test(this.interfacename)) errors.push("Nombre de Interfaz inválido.");
+                        break;
+                    case 3: // Red VPN
+                        if (!this.network || !networkBaseRegex.test(this.network)) errors.push("Formato de Red Base inválido (X.X.X).");
+                        if (this.startip === null || isNaN(this.startip) || this.startip < 2 || this.startip > 254) errors.push("IP Inicial de Cliente inválida (2-254).");
+                        if (!this.clientcount || isNaN(this.clientcount) || this.clientcount < 1) errors.push("Número de Clientes inválido (mínimo 1).");
+                        if (this.startip && this.clientcount && (this.startip + this.clientcount - 1 > 254)) errors.push("El rango de IP de clientes excede .254.");
+                        break;
+                    case 4: // Configuración Clientes
+                        const dnsEntries = this.dns.split(',').map(d => d.trim()).filter(d => d);
+                        if (!this.dns || dnsEntries.length === 0 || !dnsEntries.every(d => ipRegex.test(d) || domainRegex.test(d))) errors.push("Formato de Servidores DNS inválido.");
+                        const allowedNetsEntries = this.allowednets.split(',').map(a => a.trim()).filter(a => a);
+                        if (!this.allowednets || allowedNetsEntries.length === 0 || !allowedNetsEntries.every(a => cidrRegex.test(a) && a.includes('/'))) errors.push("Formato de Redes Permitidas (AllowedIPs) inválido (debe ser CIDR).");
+                        break;
+                    case 5: // Llaves Servidor
+                        if (!this.serverkeys.privateKey || !wgKeyRegex.test(this.serverkeys.privateKey)) errors.push("Formato de Llave Privada inválido.");
+                        // La llave pública se valida donde se calcula/muestra
+                        if (!this.serverkeys.publicKey || !wgKeyRegex.test(this.serverkeys.publicKey)) errors.push("Llave Pública no generada o inválida.");
+                        break;
+                }
+
+                if (errors.length > 0) {
+                    // Muestra todos los errores encontrados en una sola notificación
+                    this.showNotification('Por favor, corrige los siguientes errores:<br>- ' + errors.join('<br>- '), 'is-danger', 7000);
+                    return false; // Indica que la validación falló
+                }
+                return true; // Indica que la validación fue exitosa
+            },
+
+            // -------------------------------------
+            // --- Generación Principal y Clientes ---
+            // -------------------------------------
+             generateAndProceed() {
+                 // Validar de nuevo por si acaso, aunque el botón debería estar deshabilitado
+                 if (!this.isSummaryValid) {
+                     this.showNotification("No se puede generar: faltan datos o son inválidos. Revisa los pasos anteriores.", "is-danger");
+                     return;
+                 }
+                 if (!this.checkWireguardJS()) return; // Verifica que la librería WG esté cargada
+
+                 this.isLoading = true; // Activa indicador de carga
+                 this.showNotification("Generando configuraciones...", "is-info", 2000);
+
+                 // Usar try-finally para asegurar que isLoading se desactive
+                 try {
+                     // Generar clientes iniciales SOLO si no se ha cargado un perfil
+                     if (!this.profileLoaded) {
+                         const newClients = {};
+                         const count = Math.floor(this.clientcount);
+                         const start = Math.floor(this.startip);
+
+                         // Validación adicional de rango antes del bucle
+                         if (isNaN(count) || count < 1 || isNaN(start) || start < 2 || (start + count - 1 > 254) ) {
+                              throw new Error("Rango de IPs de cliente inválido.");
+                         }
+
+                         for (let i = 0; i < count; i++) {
+                             const ipSuffix = start + i;
+                             // No debería pasar por la validación previa, pero doble chequeo
+                             if (ipSuffix > 254) break;
+
+                             // Genera par de llaves y PSK para cada cliente
+                             const keypair = wireguard.generateKeypair();
+                             const psk = this.generatePresharedKey();
+                             newClients[ipSuffix] = {
+                                 ...keypair, // publicKey, privateKey
+                                 name: `Cliente_${ipSuffix}`,
+                                 preSharedKey: psk,
+                                 activeTab: 'mobile' // Pestaña por defecto en el modal
+                             };
+                         }
+                         this.$set(this, 'clients', newClients); // Usa $set para asegurar reactividad
+                     }
+
+                     // Generar el script de configuración del servidor MikroTik
+                     this.generateServerConfigScript();
+
+                     // Si la generación del script falló (error en datos básicos)
+                     if (this.serverConfigMikrotik.startsWith('# Error')) {
+                         throw new Error("No se pudo generar el script del servidor debido a datos faltantes o inválidos.");
+                     }
+
+                     this.isLoading = false; // Desactiva indicador ANTES de cambiar de paso
+                     this.goToStep(7); // Ir al paso de resultados
+
+                     if (!this.profileLoaded) {
+                         this.showNotification(`¡${Object.keys(this.clients).length} clientes generados con éxito!`, 'is-success');
+                     }
+                     this.profileLoaded = false; // Resetea flag por si se vuelve a generar sin importar
+
+                 } catch (err) {
+                     this.handleGenerationError(err); // Maneja el error
+                 } finally {
+                     this.isLoading = false; // Asegura desactivar indicador en caso de error
+                 }
+             },
+             handleGenerationError(error) {
+                 console.error("Error durante la generación:", error);
+                 this.isLoading = false; // Asegura desactivar indicador
+                 this.showNotification(`Error Crítico: ${error.message || 'Ocurrió un error desconocido'}. Revisa los datos ingresados.`, "is-danger", 10000);
+                 // Opcional: ir a un paso relevante si es posible identificarlo
+                 // this.goToStep(5); // Ej: Volver a las llaves
+             },
+             checkWireguardJS() {
+                 // Verifica si la librería wireguard.js está disponible
+                 if (typeof wireguard === 'undefined' || typeof wireguard.generateKeypair !== 'function') {
+                     this.showNotification('Error Crítico: No se pudo cargar la librería wireguard.js. La generación de llaves no funcionará.', 'is-danger', 15000);
+                     return false;
+                 }
+                 return true;
+             },
+             generatePresharedKey() {
+                 // Genera una llave pre-compartida (PSK)
+                 if (!this.checkWireguardJS()) return 'ERROR_JS_PSK_FAILED'; // Retorna error si no hay librería
+                 try {
+                     // Intenta usar la función específica si existe
+                     if (typeof wireguard.generatePresharedKey === 'function') {
+                         return wireguard.generatePresharedKey();
+                     } else {
+                         // Como fallback, genera un par y usa la privada (menos ideal pero funcional)
+                         console.warn("wireguard.generatePresharedKey no encontrada, usando generateKeypair().privateKey como PSK.");
+                         return wireguard.generateKeypair().privateKey;
+                     }
+                 } catch (e) {
+                     console.error("Error generando PSK:", e);
+                      // Fallback extremo si todo falla
+                     return 'PSK_GENERATION_ERROR_' + Date.now();
+                 }
+             },
+             generateServerKeys(silent = false) {
+                 // Genera un nuevo par de llaves para el servidor
+                 if (!this.checkWireguardJS()) return;
+                 try {
+                     const oldPrivateKey = this.serverkeys.privateKey;
+                     const keypair = wireguard.generateKeypair();
+
+                     // Usa $set para asegurar reactividad al actualizar las llaves
+                     this.$set(this.serverkeys, 'privateKey', keypair.privateKey);
+                     this.$set(this.serverkeys, 'publicKey', keypair.publicKey);
+
+                     if (!silent) { // Muestra notificación solo si no es una operación silenciosa
+                         this.showNotification('Nuevas llaves de servidor generadas con éxito.', 'is-success');
+                     }
+
+                     // Si las llaves cambiaron y ya estamos en pasos finales, regenerar y avisar
+                     if (this.currentStep >= 6 && oldPrivateKey && oldPrivateKey !== this.serverkeys.privateKey) {
+                         this.generateServerConfigScript(); // Actualiza script servidor
+                         if (!silent) {
+                             this.showNotification('¡Llaves del servidor cambiadas! Las configuraciones se han actualizado.', 'is-warning', 8000);
+                         }
+                     }
+                 } catch (e) {
+                     console.error("Error generando llaves del servidor:", e);
+                     if (!silent) {
+                         this.showNotification('Error al generar las llaves del servidor.', 'is-danger');
+                     }
+                     this.$set(this.serverkeys, 'publicKey', 'Error al generar'); // Indica error en la UI
+                 }
+             },
+
+            // -------------------------------------
+            // --- Gestión de Clientes Individuales ---
+            // -------------------------------------
+            findNextAvailableIp() {
+                // Encuentra la siguiente IP disponible para un nuevo cliente
+                const existingIps = Object.keys(this.clients).map(ip => parseInt(ip));
+                let nextIp = this.startip || 2; // Empieza desde la IP inicial configurada
+                if (existingIps.length > 0) {
+                    // Si hay clientes, busca la IP más alta y suma 1
+                    nextIp = Math.max(this.startip || 2, ...existingIps) + 1;
+                }
+                 // Asegura que la IP no exceda 254
+                 return nextIp <= 254 ? nextIp : -1; // Retorna -1 si no hay IPs disponibles
+            },
+            addNewClient() {
+                // Añade un nuevo cliente individualmente
+                if (!this.checkWireguardJS()) return;
+
+                const nextIpSuffix = this.findNextAvailableIp();
+
+                if (nextIpSuffix === -1) { // Verifica si se alcanzó el límite
+                    this.showNotification("No hay más IPs disponibles en el rango (límite .254 alcanzado).", "is-warning");
+                    return;
+                }
+
+                this.isLoading = true; // Indicador mientras se generan llaves
+                try {
+                    const keypair = wireguard.generateKeypair();
+                    const psk = this.generatePresharedKey();
+                    const newClientData = {
+                        ...keypair,
+                        name: `Cliente_${nextIpSuffix}`,
+                        preSharedKey: psk,
+                        activeTab: 'mobile'
+                    };
+
+                    // Usa $set para añadir el nuevo cliente al objeto 'clients' asegurando reactividad
+                    this.$set(this.clients, nextIpSuffix, newClientData);
+
+                    // Regenera el script del servidor para incluir al nuevo cliente
+                    this.generateServerConfigScript();
+
+                    this.showNotification(`Cliente ${newClientData.name} (${this.network}.${nextIpSuffix}) añadido. El script del servidor ha sido actualizado.`, "is-success", 5000);
+
+                    // Opcional: Mostrar modal con la configuración del peer para el servidor
+                    this.showNewPeerConfigModal(nextIpSuffix);
+
+                } catch (err) {
+                    console.error("Error añadiendo nuevo cliente:", err);
+                    this.showNotification(`Error al añadir cliente: ${err.message || 'Error desconocido'}`, "is-danger");
+                } finally {
+                    this.isLoading = false; // Desactiva indicador
+                }
+            },
+            confirmDeleteClient(ipSuffix) {
+                // Pide confirmación antes de eliminar un cliente
+                const client = this.clients[ipSuffix];
+                if (!client) {
+                    this.showNotification("Error: No se encontró el cliente a eliminar.", "is-danger");
+                    return;
+                }
+                const confirmation = window.confirm(
+                    `¿Estás seguro de que quieres eliminar al cliente "${client.name}" (${this.network}.${ipSuffix})?\n\n` +
+                    `ESTA ACCIÓN ES IRREVERSIBLE.\n\n` +
+                    `Deberás eliminar manualmente la configuración del peer correspondiente en el servidor MikroTik.`
+                );
+                if (confirmation) {
+                    this.deleteClient(ipSuffix); // Procede a eliminar si confirma
+                }
+            },
+            deleteClient(ipSuffix) {
+                // Elimina un cliente del objeto 'clients'
+                const clientName = this.clients[ipSuffix]?.name || `Cliente ${ipSuffix}`;
+
+                // Usa $delete para eliminar la propiedad asegurando reactividad
+                this.$delete(this.clients, ipSuffix);
+
+                // Regenera el script del servidor sin el cliente eliminado
+                this.generateServerConfigScript();
+
+                this.showNotification(
+                    `Cliente "${clientName}" eliminado localmente.\n` +
+                    `¡IMPORTANTE! No olvides eliminar manualmente el peer correspondiente en la configuración del servidor MikroTik.`,
+                    "is-warning", 10000 // Notificación más larga
+                );
+            },
+
+            // -------------------------------------
+            // --- Edición Inline de Clientes ---
+            // -------------------------------------
+            startEditingName(ipSuffix) {
+                // Inicia la edición del nombre de un cliente
+                this.cancelIpEdit(); // Cancela edición de IP si estuviera activa
+                this.editingClientSuffix = ipSuffix;
+                this.editingClientName = this.clients[ipSuffix].name;
+                // Enfoca el input correspondiente después de que Vue actualice el DOM
+                this.$nextTick(() => {
+                    const inputRef = this.$refs[`clientNameInput_${ipSuffix}`];
+                    if (inputRef && inputRef[0]) { // Si es un array (por v-for)
+                        inputRef[0].focus();
+                        inputRef[0].select();
+                    } else if (inputRef) { // Si es un elemento único
+                        inputRef.focus();
+                        inputRef.select();
+                    }
+                });
+            },
+            saveNameEdit(ipSuffix) {
+                // Guarda el nombre editado
+                if (this.editingClientSuffix !== ipSuffix) return; // Evita guardar si no es el correcto
+
+                const trimmedName = this.editingClientName.trim();
+                if (!trimmedName) { // No permite nombres vacíos
+                    this.showNotification("El nombre del cliente no puede estar vacío.", "is-warning");
+                    this.cancelNameEdit(); // Cancela y revierte
+                    return;
+                }
+
+                // Solo actualiza y regenera si el nombre realmente cambió
+                if (trimmedName !== this.clients[ipSuffix].name) {
+                    // Usa $set para actualizar el nombre asegurando reactividad
+                    this.$set(this.clients[ipSuffix], 'name', trimmedName);
+                    this.generateServerConfigScript(); // Regenera script servidor
+                    this.showNotification(`Nombre del cliente actualizado a "${trimmedName}". Script servidor regenerado.`, "is-success", 3000);
+                }
+                this.cancelNameEdit(); // Finaliza modo edición
+            },
+            cancelNameEdit() {
+                // Cancela la edición del nombre
+                this.editingClientSuffix = null;
+                this.editingClientName = '';
+            },
+            startEditingIp(ipSuffix) {
+                // Inicia la edición de la IP de un cliente
+                this.cancelNameEdit(); // Cancela edición de nombre si estuviera activa
+                this.editingClientIpSuffix = ipSuffix;
+                this.editingClientIpValue = parseInt(ipSuffix);
+                // Enfoca el input
+                this.$nextTick(() => {
+                     const inputRef = this.$refs[`clientIpInput_${ipSuffix}`];
+                     if (inputRef && inputRef[0]) { inputRef[0].focus(); inputRef[0].select(); }
+                     else if (inputRef) { inputRef.focus(); inputRef.select(); }
+                });
+            },
+            saveIpEdit(currentIpSuffix) {
+                // Guarda la IP editada
+                if (this.editingClientIpSuffix !== currentIpSuffix) return;
+
+                const newIpSuffix = this.editingClientIpValue;
+
+                // Validaciones de la nueva IP
+                if (newIpSuffix === null || isNaN(newIpSuffix) || newIpSuffix < 2 || newIpSuffix > 254) {
+                    this.showNotification("IP inválida. Debe ser un número entre 2 y 254.", "is-danger");
+                    // Mantener el foco para corrección fácil
+                    this.$nextTick(() => {
+                        const inputRef = this.$refs[`clientIpInput_${currentIpSuffix}`];
+                        if(inputRef && inputRef[0]) inputRef[0].focus();
+                        else if(inputRef) inputRef.focus();
+                    });
+                    return; // No guardar
+                }
+
+                // Si la IP no cambió, simplemente cancela
+                if (newIpSuffix === parseInt(currentIpSuffix)) {
+                    this.cancelIpEdit();
+                    return;
+                }
+
+                // Si la nueva IP ya está en uso por otro cliente
+                if (this.clients[newIpSuffix]) {
+                    this.showNotification(`La IP ${this.network}.${newIpSuffix} ya está asignada a otro cliente. Elige una IP diferente.`, "is-danger");
+                     this.$nextTick(() => {
+                        const inputRef = this.$refs[`clientIpInput_${currentIpSuffix}`];
+                        if(inputRef && inputRef[0]) inputRef[0].focus();
+                        else if(inputRef) inputRef.focus();
+                    });
+                    return; // No guardar
+                }
+
+                // Procede a cambiar la IP
+                const clientData = { ...this.clients[currentIpSuffix] }; // Copia los datos del cliente
+
+                // Elimina la entrada antigua y añade la nueva usando $delete y $set para reactividad
+                this.$delete(this.clients, currentIpSuffix);
+                this.$set(this.clients, newIpSuffix, clientData);
+
+                this.generateServerConfigScript(); // Regenera script servidor
+                this.showNotification(`IP de "${clientData.name}" actualizada a ${this.network}.${newIpSuffix}. Script servidor regenerado.`, "is-success", 4000);
+                this.cancelIpEdit(); // Finaliza modo edición
+            },
+            cancelIpEdit() {
+                // Cancela la edición de la IP
+                this.editingClientIpSuffix = null;
+                this.editingClientIpValue = null;
+            },
+
+             // -------------------------------------
+             // --- Generación de Contenidos Específicos ---
+             // -------------------------------------
+             generateClientConfContent(ipSuffix) {
+                 // Genera el contenido para un archivo .conf de cliente
+                 const client = this.clients[ipSuffix];
+                 const serverAddress = this.server;
+                 const serverPort = this.port;
+                 const clientIP = this.network ? `${this.network}.${ipSuffix}` : null;
+                 const clientDNS = this.dns || ''; // Usa DNS o string vacío
+                 const serverPublicKey = this.serverkeys.publicKey;
+
+                 // Verifica que todos los datos necesarios estén presentes
+                 if (!client || !serverAddress || !serverPort || !clientIP || !client.privateKey || !serverPublicKey || !client.preSharedKey) {
+                     console.error(`Datos incompletos para generar .conf Cliente ${ipSuffix}`, { client, serverAddress, serverPort, clientIP, clientDNS, serverPublicKey });
+                     return `# Error: Faltan datos para generar la configuración del cliente ${ipSuffix}. Revisa los pasos anteriores.`;
+                 }
+
+                 // Determina las AllowedIPs para el peer (servidor) en la config del cliente
+                 const allowedIPsList = [];
+                 if (this.allowednets) {
+                     allowedIPsList.push(...this.allowednets.split(',').map(s => s.trim()).filter(s => s));
+                 } else {
+                     // Si no se especificaron, usa un default razonable (todo)
+                     allowedIPsList.push('0.0.0.0/0', '::/0');
+                     console.warn("AllowedIPs para cliente no definidas, usando '0.0.0.0/0, ::/0' por defecto.");
+                 }
+
+                 // Construye el contenido del archivo .conf
+                 return `[Interface]
+# Nombre: ${client.name}
+# Conexión a: ${serverAddress}
+Address = ${clientIP}/32
+PrivateKey = ${client.privateKey}
+DNS = ${clientDNS}
+
+[Peer]
+# Peer: Servidor (${this.interfacename})
+PublicKey = ${serverPublicKey}
+PresharedKey = ${client.preSharedKey}
+AllowedIPs = ${allowedIPsList.join(', ')}
+Endpoint = ${serverAddress}:${serverPort}
+PersistentKeepalive = 25
+`;
+            },
+            generateMikrotikClientScript(ipSuffix) {
+                // Genera el script .rsc para configurar un cliente MikroTik
+                const client = this.clients[ipSuffix];
+                const serverAddress = this.server;
+                const serverPort = this.port;
+                const clientIP = this.network ? `${this.network}.${ipSuffix}` : null;
+                const clientNetwork = this.network ? `${this.network}.0` : null;
+                const serverPublicKey = this.serverkeys.publicKey;
+                const serverVPNIP = this.network ? `${this.network}.1` : null; // IP del servidor WG para rutas
+
+                // Verifica datos necesarios
+                if (!client || !serverAddress || !serverPort || !clientIP || !clientNetwork || !client.privateKey || !serverPublicKey || !client.preSharedKey || !serverVPNIP) {
+                     console.error(`Datos incompletos para generar .rsc Cliente ${ipSuffix}`, { client, serverAddress, serverPort, clientIP, clientNetwork, serverPublicKey, serverVPNIP });
+                    return `# Error: Faltan datos para generar el script MikroTik del cliente ${ipSuffix}. Revisa los pasos anteriores.`;
+                }
+
+                // AllowedIPs para el peer (servidor) en el cliente MikroTik
+                const allowedClientIPs = this.allowednets || '0.0.0.0/0, ::/0'; // Default si no se especifica
+
+                // Nombre seguro para la interfaz en MikroTik (limitar longitud y caracteres)
+                const safeClientName = client.name.replace(/[^a-zA-Z0-9-]/g, '-');
+                const interfaceName = `wg-${safeClientName}`.substring(0, 15); // MikroTik limita nombres
+
+                // Construye el script .rsc
+                let script = `# === Script MikroTik Cliente WireGuard ===\n`;
+                script += `# Cliente: ${client.name}\n`;
+                script += `# Conexión a Servidor: ${serverAddress}:${serverPort}\n`;
+                script += `# Fecha: ${new Date().toLocaleString()}\n\n`;
+
+                script += `# 1. Crear Interfaz WireGuard Cliente\n`;
+                script += `/interface wireguard\n`;
+                script += `add listen-port=${serverPort} mtu=1420 name=${interfaceName} private-key="${client.privateKey}" comment="Cliente WG -> ${serverAddress}"\n\n`;
+
+                script += `# 2. Asignar IP VPN a la interfaz cliente\n`;
+                script += `/ip address\n`;
+                script += `add address=${clientIP}/24 comment="IP VPN Cliente ${client.name}" interface=${interfaceName} network=${clientNetwork}\n\n`;
+
+                script += `# 3. Configurar Peer (el servidor remoto)\n`;
+                script += `/interface wireguard peers\n`;
+                script += `add allowed-address=${allowedClientIPs} comment="Peer Servidor ${serverAddress}" endpoint-address=${serverAddress} endpoint-port=${serverPort} interface=${interfaceName} persistent-keepalive=25s preshared-key="${client.preSharedKey}" public-key="${serverPublicKey}"\n\n`;
+
+                script += `# 4. (Opcional) Añadir rutas estáticas si AllowedIPs NO es 0.0.0.0/0\n`;
+                script += `#    (Necesario si usas Split Tunnel para dirigir tráfico específico por la VPN)\n`;
+                script += `/ip route\n`;
+                let needsRouting = false;
+                if (this.allowednets) {
+                    const routes = this.allowednets.split(',')
+                        .map(n => n.trim())
+                        .filter(n => n && n.includes('/') && n !== '0.0.0.0/0' && n !== '::/0'); // Filtra rutas específicas
+                    if (routes.length > 0) {
+                        needsRouting = true;
+                        routes.forEach(route => {
+                            // Usar la IP del servidor WG como gateway para estas rutas
+                            script += `add dst-address=${route} gateway=${serverVPNIP} comment="Ruta via WG Cliente para ${route}" routing-mark=WG_${interfaceName} disabled=no\n`;
+                            // Opcional: Podrías usar la interfaz como gateway si sabes que siempre estará activa
+                            // script += `add dst-address=${route} gateway=${interfaceName} comment="Ruta via WG Cliente para ${route}"\n`;
+                        });
+                        script += `\n# (Opcional) Regla Mangle para marcar tráfico saliente hacia la VPN\n`;
+                         script += `/ip firewall mangle\n`;
+                         script += `add action=mark-routing chain=prerouting comment="Marcar trafico VPN saliente ${interfaceName}" new-routing-mark=WG_${interfaceName} passthrough=no src-address=${clientNetwork}/24 disabled=no\n`;
+                    }
+                }
+                if (!needsRouting) {
+                    script += `# (No se requieren rutas estáticas adicionales, ya que AllowedIPs cubre todo o no hay rutas específicas definidas)\n`;
+                }
+                script += `\n# === Fin Script Cliente ${client.name} ===\n`;
+                return script;
+            },
+             generateSinglePeerConfig(ipSuffix) {
+                 // Genera la línea de configuración para un peer (cliente) en el servidor MikroTik
+                 const client = this.clients[ipSuffix];
+                 const clientVPNIP = this.network ? `${this.network}.${ipSuffix}` : null;
+
+                 // Verifica datos necesarios
+                 if (!client || !clientVPNIP || !this.interfacename || !client.publicKey || !client.preSharedKey) {
+                     console.warn(`Datos incompletos para generar config peer servidor para C:${ipSuffix}`, { client, clientVPNIP, interface: this.interfacename });
+                     return `# Error: Datos incompletos para Peer Cliente ${client?.name || ipSuffix}`;
+                 }
+
+                 // Construye la línea de comando para añadir el peer
+                 return `add allowed-address=${clientVPNIP}/32 comment="${client.name}" interface=${this.interfacename} public-key="${client.publicKey}" preshared-key="${client.preSharedKey}" persistent-keepalive=25s`;
+             },
+             generateServerConfigScript() {
+                 // Genera el script .rsc completo para el servidor MikroTik
+                 const serverVPNIP = this.network ? `${this.network}.1` : null;
+                 const serverNetwork = this.network ? `${this.network}.0` : null;
+
+                 // Verifica datos esenciales del servidor
+                 if (!this.network || !serverVPNIP || !serverNetwork || !this.serverkeys.privateKey || !this.interfacename || !this.port) {
+                     this.serverConfigMikrotik = "# Error Crítico: Faltan datos esenciales del servidor (Red, Llave Privada, Nombre Interfaz, Puerto) para generar el script.";
+                     console.error("generateServerConfigScript: Missing essential server data", { network: this.network, serverVPNIP, serverNetwork, privateKeyExists: !!this.serverkeys.privateKey, interfacename: this.interfacename, port: this.port });
+                     return; // Detiene la generación si faltan datos
+                 }
+
+                 // Construye el script
+                 let s = `# === Configuración Completa Servidor WireGuard MikroTik ===\n`;
+                 s += `# Servidor: ${this.server} (referencia, no usado en script)\n`;
+                 s += `# Interfaz WG: ${this.interfacename}\n`;
+                 s += `# Red VPN: ${serverNetwork}/24\n`;
+                 s += `# Puerto UDP: ${this.port}\n`;
+                 s += `# Fecha Generación: ${new Date().toLocaleString()}\n\n`;
+
+                 s += `# 1. Crear/Actualizar Interfaz WireGuard Servidor\n`;
+                 s += `#    (Si ya existe, estos comandos pueden fallar o no hacer nada, es seguro ejecutar)\n`;
+                 s += `/interface wireguard\n`;
+                 s += `add listen-port=${this.port} mtu=1420 name=${this.interfacename} private-key="${this.serverkeys.privateKey}" comment="Servidor WireGuard Principal"\n\n`;
+
+                 s += `# 2. Regla Firewall para permitir tráfico UDP entrante al puerto WG\n`;
+                 s += `#    (Asegúrate de que no haya reglas más restrictivas antes)\n`;
+                 s += `/ip firewall filter\n`;
+                 s += `add action=accept chain=input comment="Permitir Conexiones WireGuard (UDP)" dst-port=${this.port} protocol=udp place-before=0\n`;
+                 s += `# Nota: 'place-before=0' intenta ponerla al principio. Ajusta si es necesario.\n\n`;
+
+                 s += `# 3. Asignar IP al Servidor WG (Gateway de la VPN)\n`;
+                 s += `#    (Asegúrate de que la IP no esté ya en uso)\n`;
+                 s += `/ip address\n`;
+                 s += `add address=${serverVPNIP}/24 comment="Gateway VPN WireGuard" interface=${this.interfacename} network=${serverNetwork}\n\n`;
+
+                 s += `# 4. Configuración de Peers (Clientes)\n`;
+                 s += `#    (Estas líneas añaden o actualizan los peers basados en la llave pública)\n`;
+                 s += `/interface wireguard peers\n`;
+                 if (this.sortedClients.length === 0) {
+                     s += `# (No hay clientes definidos en este asistente actualmente.)\n`;
+                 } else {
+                     let peerErrors = false;
+                     this.sortedClients.forEach(client => {
+                         const peerConfig = this.generateSinglePeerConfig(client.ipSuffix);
+                         if (peerConfig.startsWith('# Error')) {
+                             peerErrors = true;
+                             s += `# ERROR: No se pudo generar la configuración para el cliente ${client.ipSuffix} (${client.name}). ${peerConfig}\n`;
+                         } else {
+                             s += peerConfig + '\n';
+                         }
+                     });
+                     if (peerErrors) {
+                         s += `#\n# ADVERTENCIA: Hubo errores al generar la configuración de uno o más peers.\n`;
+                     }
+                 }
+                 s += `\n# 5. (Opcional) Configuración NAT/Masquerade\n`;
+                 s += `#    (Necesario si los clientes VPN deben salir a Internet a través de este MikroTik)\n`;
+                 s += `#    (Descomenta y AJUSTA 'out-interface' a tu interfaz WAN real, ej: ether1, pppoe-out1, sfp-plus1)\n`;
+                 s += `/ip firewall nat\n`;
+                 s += `# add action=masquerade chain=srcnat out-interface=<TU_INTERFAZ_WAN> comment="NAT para clientes WG (${serverNetwork}/24)" src-address=${serverNetwork}/24\n`;
+
+                 s += `\n# === Fin Configuración Servidor ===\n`;
+                 this.serverConfigMikrotik = s; // Almacena el script generado
+             },
+
+             // -------------------------------------
+             // --- Importar/Exportar Perfil (.json) ---
+             // -------------------------------------
+             saveProfile() {
+                 // Guarda la configuración actual en un archivo JSON
+                 try {
+                     // Validación básica antes de guardar
+                     if (!this.server || !this.serverkeys.privateKey || Object.keys(this.clients).length === 0) {
+                         this.showNotification("Faltan datos esenciales (Servidor, Llaves, Clientes) para guardar el perfil.", "is-warning");
+                         return;
+                     }
+
+                     // Prepara el objeto de datos a guardar
+                     const dataToSave = {
+                         version: "infratec-wg-profile-v1", // Versión del formato
+                         server: this.server,
+                         port: this.port,
+                         interfacename: this.interfacename,
+                         network: this.network,
+                         startip: this.startip,
+                         // clientcount no se guarda, se deriva de 'clients' al cargar
+                         dns: this.dns,
+                         allowednets: this.allowednets,
+                         serverkeys: {
+                             privateKey: this.serverkeys.privateKey,
+                             publicKey: this.serverkeys.publicKey
+                         },
+                         // Guarda solo los datos necesarios de cada cliente
+                         clients: Object.entries(this.clients).reduce((acc, [ipSuffix, clientData]) => {
+                             acc[ipSuffix] = {
+                                 name: clientData.name,
+                                 privateKey: clientData.privateKey,
+                                 publicKey: clientData.publicKey,
+                                 preSharedKey: clientData.preSharedKey
+                                 // No guardar 'activeTab'
+                             };
+                             return acc;
+                         }, {})
+                     };
+
+                     // Crea un Blob JSON
+                     const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: "application/json;charset=utf-8" });
+                     // Nombre de archivo sugerido
+                     const filename = `infratec_wg_profile_${this.server || 'server'}_${Date.now()}.json`;
+                     // Usa FileSaver.js para iniciar la descarga
+                     saveAs(blob, filename);
+                     this.showNotification("Perfil guardado correctamente como " + filename, "is-success");
+
+                 } catch (e) {
+                     console.error("Error al guardar perfil:", e);
+                     this.showNotification(`Error al guardar el perfil: ${e.message}`, "is-danger");
+                 }
+             },
+             triggerImport() {
+                 // Simula un clic en el input file oculto
+                 this.$refs.profileInput.click();
+             },
+             handleProfileImport(event) {
+                 // Procesa el archivo JSON seleccionado por el usuario
+                 const file = event.target.files[0];
+                 if (!file) return; // No hacer nada si no se selecciona archivo
+
+                 const reader = new FileReader();
+
+                 reader.onload = (e) => {
+                     let loadedData;
+                     try {
+                         loadedData = JSON.parse(e.target.result);
+
+                         // Validación básica del formato del archivo
+                         if (!loadedData || loadedData.version !== "infratec-wg-profile-v1" || !loadedData.serverkeys || typeof loadedData.clients !== 'object') {
+                             throw new Error("Archivo inválido o versión no compatible.");
+                         }
+
+                         // --- Carga de datos (con $set para reactividad) ---
+                         this.$set(this, 'server', loadedData.server || '');
+                         this.$set(this, 'port', loadedData.port || 51820);
+                         this.$set(this, 'interfacename', loadedData.interfacename || 'wg-server');
+                         this.$set(this, 'network', loadedData.network || '');
+                         this.$set(this, 'startip', loadedData.startip || 2);
+                         this.$set(this, 'dns', loadedData.dns || '');
+                         this.$set(this, 'allowednets', loadedData.allowednets || '');
+                         this.$set(this.serverkeys, 'privateKey', loadedData.serverkeys.privateKey || '');
+                         this.$set(this.serverkeys, 'publicKey', loadedData.serverkeys.publicKey || ''); // La pública también se carga
+
+                         // Carga de clientes (validando cada uno)
+                         const loadedClients = {};
+                         for (const ipSuffix in loadedData.clients) {
+                             if (loadedData.clients.hasOwnProperty(ipSuffix)) {
+                                 const c = loadedData.clients[ipSuffix];
+                                 const ipNum = parseInt(ipSuffix);
+                                 // Valida datos esenciales del cliente y rango de IP
+                                 if (c && c.name && c.privateKey && c.publicKey && c.preSharedKey && !isNaN(ipNum) && ipNum >= 2 && ipNum <= 254) {
+                                     loadedClients[ipNum] = {
+                                         name: c.name,
+                                         privateKey: c.privateKey,
+                                         publicKey: c.publicKey,
+                                         preSharedKey: c.preSharedKey,
+                                         activeTab: 'mobile' // Asigna tab por defecto
+                                     };
+                                 } else {
+                                     console.warn(`Cliente con IP Suffix ${ipSuffix} ignorado por datos inválidos o faltantes.`);
+                                 }
+                             }
+                         }
+                         this.$set(this, 'clients', loadedClients); // Carga los clientes validados
+                         this.$set(this, 'clientcount', Object.keys(loadedClients).length || 1); // Actualiza contador (meramente informativo)
+
+                         this.generateServerConfigScript(); // Genera script con datos importados
+                         this.profileLoaded = true; // Marca que se cargó desde perfil
+                         this.goToStep(7); // Ir directo a la página de resultados
+                         this.showNotification(`Perfil "${file.name}" (${Object.keys(this.clients).length} clientes) cargado con éxito.`, "is-success", 6000);
+
+                     } catch (err) {
+                         console.error("Error al importar perfil:", err);
+                         this.showNotification(`Error al importar el perfil: ${err.message}. Se restaurará el estado inicial.`, "is-danger", 8000);
+                         this.startOver(); // Reinicia si la importación falla
+                     } finally {
+                         // Limpia el input file para permitir importar el mismo archivo de nuevo
+                         event.target.value = null;
+                     }
+                 };
+
+                 reader.onerror = (e) => {
+                     console.error("Error al leer archivo:", e);
+                     this.showNotification("Error al leer el archivo seleccionado.", "is-danger");
+                     event.target.value = null; // Limpia input
+                 };
+
+                 reader.readAsText(file); // Lee el archivo como texto
+             },
+
+            // -------------------------------------
+            // --- Descargas Individuales y ZIP ---
+            // -------------------------------------
+            async getQrBlobForClient(ipSuffix) {
+                // Genera un Blob de imagen PNG para el código QR de un cliente
+                const client = this.clients[ipSuffix];
+                if (!client) return null;
+
+                const configText = this.generateClientConfContent(ipSuffix);
+                if (!configText || configText.startsWith('# Error')) {
+                    console.warn(`No se puede generar QR para ${ipSuffix}: configuración inválida.`);
+                    return null;
+                }
+
+                try {
+                    // Opciones para la librería kjua
+                    const options = {
+                        render: 'canvas',   // Renderizar en un canvas
+                        crisp: true,        // Bordes nítidos
+                        size: 256,          // Tamaño en píxeles
+                        text: configText,   // Texto a codificar
+                        fill: '#000',       // Color del QR (negro)
+                        back: '#fff',       // Color de fondo (blanco)
+                        quiet: 2,           // Margen (zonas quietas) alrededor del QR
+                        ecLevel: 'L'        // Nivel de corrección de errores (Low)
+                    };
+                    const canvasElement = kjua(options); // Genera el elemento canvas
+
+                    // Convierte el canvas a Blob PNG de forma asíncrona
+                    return new Promise(resolve => canvasElement.toBlob(blob => resolve(blob), 'image/png'));
+                } catch (err) {
+                    console.error(`Error generando QR Blob para ${ipSuffix}:`, err);
+                    return null; // Retorna null si falla la generación
+                }
+            },
+            async downloadAllZip() {
+                // Descarga un archivo ZIP con todas las configuraciones (servidor y clientes)
+                if (Object.keys(this.clients).length === 0 && !this.serverConfigMikrotik) {
+                    this.showNotification("No hay configuraciones para exportar en el archivo ZIP.", "is-warning");
+                    return;
+                }
+
+                this.isLoading = true;
+                this.showNotification("Generando archivo ZIP completo...", "is-info", 4000);
+
+                try {
+                    const zip = new JSZip(); // Crea instancia de JSZip
+
+                    // Añade script del servidor si existe y es válido
+                    if (this.serverConfigMikrotik && !this.serverConfigMikrotik.startsWith('# Error')) {
+                        zip.file(`${this.interfacename}_server_completo.rsc`, this.serverConfigMikrotik);
+                    }
+
+                    // Añade archivos de cada cliente
+                    const clientFolder = zip.folder("clientes"); // Crea una carpeta para clientes
+                    for (const ipSuffix in this.clients) {
+                        if (this.clients.hasOwnProperty(ipSuffix)) {
+                            const client = this.clients[ipSuffix];
+                            // Nombre seguro para archivos y carpetas
+                            const nameSafe = client.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+                            const clientSubFolder = clientFolder.folder(nameSafe); // Carpeta para cada cliente
+
+                            // Añade archivo .conf
+                            const confContent = this.generateClientConfContent(ipSuffix);
+                            if (confContent && !confContent.startsWith('# Error')) {
+                                clientSubFolder.file(`${nameSafe}.conf`, confContent);
+                            }
+
+                            // Añade script .rsc cliente MikroTik
+                            const rscContent = this.generateMikrotikClientScript(ipSuffix);
+                            if (rscContent && !rscContent.startsWith('# Error')) {
+                                clientSubFolder.file(`${nameSafe}_mikrotik_cliente.rsc`, rscContent);
+                            }
+
+                            // Añade imagen QR
+                            const qrBlob = await this.getQrBlobForClient(ipSuffix);
+                            if (qrBlob) {
+                                clientSubFolder.file(`${nameSafe}_qr.png`, qrBlob);
+                            }
+                        }
+                    }
+
+                    // Genera el archivo ZIP de forma asíncrona
+                    const zipBlob = await zip.generateAsync({
+                        type: "blob",
+                        compression: "DEFLATE", // Método de compresión
+                        compressionOptions: { level: 6 } // Nivel de compresión (1-9)
+                    });
+
+                    // Inicia la descarga usando FileSaver.js
+                    saveAs(zipBlob, `WireGuard_Configs_${this.server || 'Server'}_${Date.now()}.zip`);
+                    this.showNotification("Archivo ZIP completo descargado con éxito.", "is-success");
+
+                } catch (error) {
+                    console.error("Error generando ZIP completo:", error);
+                    this.showNotification(`Error al generar el archivo ZIP: ${error.message}`, "is-danger");
+                } finally {
+                    this.isLoading = false; // Desactiva indicador
+                }
+            },
+            async downloadSingleClientZip(ipSuffix) {
+                // Descarga un ZIP con los archivos de un solo cliente
+                const client = this.clients[ipSuffix];
+                if (!client) return; // Sale si no existe el cliente
+
+                this.isLoading = true;
+                const nameSafe = client.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+                this.showNotification(`Generando ZIP para ${client.name}...`, "is-info", 2000);
+
+                try {
+                    const zip = new JSZip();
+
+                    // Añade .conf
+                    const confContent = this.generateClientConfContent(ipSuffix);
+                    if (confContent && !confContent.startsWith('# Error')) {
+                        zip.file(`${nameSafe}.conf`, confContent);
+                    }
+
+                    // Añade .rsc
+                    const rscContent = this.generateMikrotikClientScript(ipSuffix);
+                    if (rscContent && !rscContent.startsWith('# Error')) {
+                        zip.file(`${nameSafe}_mikrotik_cliente.rsc`, rscContent);
+                    }
+
+                    // Añade QR
+                    const qrBlob = await this.getQrBlobForClient(ipSuffix);
+                    if (qrBlob) {
+                        zip.file(`${nameSafe}_qr.png`, qrBlob);
+                    }
+
+                    // Verifica si se añadió algún archivo al ZIP
+                    if (Object.keys(zip.files).length === 0) {
+                         this.showNotification(`No se pudo generar ningún archivo válido para ${client.name}.`, "is-warning");
+                         this.isLoading = false;
+                         return;
+                    }
+
+                    // Genera y descarga el ZIP
+                    const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+                    saveAs(zipBlob, `WG_Cliente_${nameSafe}.zip`);
+                    this.showNotification(`Archivo ZIP para ${client.name} descargado.`, "is-success");
+
+                } catch (error) {
+                    console.error(`Error generando ZIP para cliente ${client.name}:`, error);
+                    this.showNotification(`Error al generar el ZIP para ${client.name}: ${error.message}`, "is-danger");
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            downloadSingleConf(ipSuffix) {
+                // Descarga solo el archivo .conf de un cliente
+                const client = this.clients[ipSuffix];
+                if (!client) return;
+
+                const content = this.generateClientConfContent(ipSuffix);
+                if (!content || content.startsWith('# Error')) {
+                    this.showNotification("Error al generar la configuración .conf.", "is-danger");
+                    return;
+                }
+                const nameSafe = client.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+                saveAs(new Blob([content], { type: "text/plain;charset=utf-8" }), `${nameSafe}.conf`);
+                this.showNotification(`Archivo .conf para ${client.name} descargado.`, "is-success");
+            },
+            downloadSingleMikrotikScript(ipSuffix) {
+                 // Descarga solo el script .rsc de un cliente MikroTik
+                 const client = this.clients[ipSuffix];
+                 if (!client) return;
+
+                 const content = this.generateMikrotikClientScript(ipSuffix);
+                 if (!content || content.startsWith('# Error')) {
+                     this.showNotification("Error al generar el script .rsc para cliente MikroTik.", "is-danger");
+                     return;
+                 }
+                 const nameSafe = client.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+                 saveAs(new Blob([content], { type: "text/plain;charset=utf-8" }), `${nameSafe}_mikrotik_cliente.rsc`);
+                 this.showNotification(`Archivo .rsc para ${client.name} descargado.`, "is-success");
+            },
+            async downloadSingleQR(ipSuffix) {
+                // Descarga solo la imagen QR de un cliente
+                const client = this.clients[ipSuffix];
+                if (!client) return;
+
+                const nameSafe = client.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+                this.showNotification(`Generando imagen QR para ${client.name}...`, "is-info", 1500);
+
+                const qrBlob = await this.getQrBlobForClient(ipSuffix);
+                if (qrBlob) {
+                    saveAs(qrBlob, `${nameSafe}_qr.png`);
+                    this.showNotification(`Código QR para ${client.name} descargado.`, "is-success");
+                } else {
+                    this.showNotification(`Error al generar la imagen QR para ${client.name}.`, "is-danger");
+                }
+            },
+            downloadServerPeersScript() {
+                // Descarga un .rsc solo con los comandos de peer para el servidor
+                if (Object.keys(this.clients).length === 0) {
+                    this.showNotification("No hay clientes definidos para generar el script de peers del servidor.", "is-warning");
+                    return;
+                }
+
+                let script = `# === Configuración SOLO Peers Servidor WG (${this.interfacename}) ===\n`;
+                script += `# Fecha: ${new Date().toLocaleString()}\n`;
+                script += `# Total Peers: ${this.sortedClients.length}\n`;
+                script += `# Pegar estas líneas en la sección '/interface wireguard peers' del servidor MikroTik ${this.server}\n\n`;
+
+                let hasErrors = false;
+                this.sortedClients.forEach(client => {
+                    const peerConfig = this.generateSinglePeerConfig(client.ipSuffix);
+                    if (peerConfig.startsWith('# Error')) {
+                        hasErrors = true;
+                        script += `# ERROR generando config peer para Cliente ${client.ipSuffix} (${client.name}). ${peerConfig}\n`;
+                    } else {
+                        script += peerConfig + '\n';
+                    }
+                });
+                script += `\n# === Fin Peers ===\n`;
+
+                if (hasErrors) {
+                    this.showNotification("Script de peers generado, pero contiene errores para algunos clientes. Revisa los datos.", "is-warning");
+                }
+
+                const blob = new Blob([script], { type: "text/plain;charset=utf-8" });
+                saveAs(blob, `${this.interfacename}_server_peers_only_${Date.now()}.rsc`);
+                this.showNotification("Script de Peers del Servidor (.rsc) descargado.", hasErrors ? "is-warning" : "is-success");
+            },
+
+             // -------------------------------------
+             // --- Compartir Configuraciones ---
+             // -------------------------------------
+             getClientShareText(ipSuffix) {
+                 // Genera un texto unificado con las configuraciones de un cliente para compartir
+                 const client = this.clients[ipSuffix];
+                 if (!client) return "Error: Cliente no encontrado.";
+
+                 const confContent = this.generateClientConfContent(ipSuffix);
+                 const rscContent = this.generateMikrotikClientScript(ipSuffix);
+                 const nameSafe = client.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+
+                 let shareText = `📄 Configuración WireGuard para "${client.name}" (Servidor: ${this.server}):\n\n`;
+
+                 // Sección .conf
+                 shareText += `💻 --- Desktop/Móvil (.conf) ---\n`;
+                 if (confContent && !confContent.startsWith('# Error')) {
+                     shareText += `${confContent}\n`;
+                     shareText += `(Guardar como ${nameSafe}.conf o escanear QR)\n\n`;
+                 } else {
+                     shareText += `# No se pudo generar la configuración .conf.\n\n`;
+                 }
+
+                 // Sección .rsc
+                 shareText += `⚙️ --- MikroTik Cliente (.rsc) ---\n`;
+                 if (rscContent && !rscContent.startsWith('# Error')) {
+                     shareText += `${rscContent}\n`;
+                     shareText += `(Ejecutar en la terminal del MikroTik cliente)\n\n`;
+                 } else {
+                     shareText += `# No se pudo generar el script .rsc.\n\n`;
+                 }
+
+                 shareText += `✨ Generado por Asistente WireGuard Infratec.`;
+                 return shareText;
+             },
+             shareViaWhatsapp(ipSuffix) {
+                 const text = this.getClientShareText(ipSuffix);
+                 if (text.startsWith('Error')) { this.showNotification(text, 'is-danger'); return; }
+                 window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                 this.showNotification("Abriendo WhatsApp...", "is-info", 2000);
+             },
+             shareViaTelegram(ipSuffix) {
+                 const text = this.getClientShareText(ipSuffix);
+                 if (text.startsWith('Error')) { this.showNotification(text, 'is-danger'); return; }
+                 window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(text)}`, '_blank');
+                 this.showNotification("Abriendo Telegram...", "is-info", 2000);
+             },
+             shareViaSlack(ipSuffix) {
+                 // Para Slack (y otros), simplemente copia el texto al portapapeles
+                 const text = this.getClientShareText(ipSuffix);
+                 if (text.startsWith('Error')) { this.showNotification(text, "is-danger"); return; }
+                 this.copyTextToClipboard(text, `Configuración completa de ${this.clients[ipSuffix].name} copiada. Pégala donde necesites.`);
+             },
+             generateMailtoLink(ipSuffix) {
+                 // Genera un enlace mailto: para compartir por email
+                 const client = this.clients[ipSuffix];
+                 if (!client) return '#'; // Retorna '#' si no hay cliente
+
+                 const subject = `Configuración WireGuard VPN - ${client.name} @ ${this.server}`;
+                 const body = this.getClientShareText(ipSuffix);
+                 // Codifica correctamente para URL
+                 return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+             },
+
+             // -------------------------------------
+             // --- Gestión de Modales ---
+             // -------------------------------------
+             showClientModal(ipSuffix) {
+                 // Muestra el modal de detalles para un cliente específico
+                 if (this.clients[ipSuffix]) {
+                     this.activeModalClientSuffix = ipSuffix;
+                     // Renderiza el QR DESPUÉS de que el modal sea visible
+                     this.$nextTick(() => {
+                         this.renderQrCodeForModal(ipSuffix);
+                     });
+                 } else {
+                     console.error(`Error al mostrar modal: Cliente ${ipSuffix} no encontrado.`);
+                     this.showNotification("Error: No se encontraron los datos para mostrar detalles de este cliente.", "is-warning");
+                 }
+             },
+             closeClientModal() {
+                 // Cierra el modal de detalles del cliente
+                 this.activeModalClientSuffix = null;
+             },
+             switchTab(ipSuffix, tabName) {
+                 // Cambia la pestaña activa dentro del modal de detalles
+                 const client = this.clients[ipSuffix];
+                 if (client) {
+                     // Usa $set para asegurar reactividad al cambiar la pestaña activa
+                     this.$set(client, 'activeTab', tabName);
+                     // Si se cambia a la pestaña móvil y el modal está activo, renderiza el QR
+                     if (tabName === 'mobile' && this.activeModalClientSuffix === ipSuffix) {
+                         this.$nextTick(() => this.renderQrCodeForModal(ipSuffix));
+                     }
+                 }
+             },
+             showNewPeerConfigModal(ipSuffix) {
+                 // Muestra el modal con la configuración del peer para el servidor
+                 const client = this.clients[ipSuffix];
+                 if (!client) {
+                     this.showNotification("Error: Cliente no encontrado para mostrar configuración de peer.", "is-danger");
+                     return;
+                 }
+                 this.newPeerConfigText = this.generateSinglePeerConfig(ipSuffix); // Genera el texto
+                 this.newlyAddedClientInfo = `${client.name} (${this.network}.${ipSuffix})`; // Info para el título
+                 this.showAddClientModal = true; // Activa el modal
+             },
+             copyNewPeerConfig() {
+                 // Copia la configuración del peer desde el modal
+                 if (!this.newPeerConfigText || this.newPeerConfigText.startsWith('# Error')) {
+                     this.showNotification("Error: No se pudo generar o copiar la configuración del peer.", "is-danger");
+                     return;
+                 }
+                 this.copyTextToClipboard(this.newPeerConfigText, "Configuración del peer para el servidor copiada.");
+             },
+
+             // -------------------------------------
+             // --- Helpers (Notificaciones, Selección, Copia) ---
+             // -------------------------------------
+             showNotification(message, type = 'is-info', duration = 5000) {
+                 // Muestra una notificación en pantalla
+                 const notification = {
+                     id: Date.now() + Math.random(), // ID único
+                     message: message.replace(/\n/g, '<br>'), // Reemplaza saltos de línea por <br>
+                     type: type, // Tipo Bulma (is-info, is-success, is-warning, is-danger)
+                 };
+                 this.notifications.push(notification); // Añade al array
+
+                 // Si la duración es positiva, la cierra automáticamente
+                 if (duration > 0) {
+                     setTimeout(() => this.dismissNotification(notification.id), duration);
+                 }
+             },
+             dismissNotification(id) {
+                 // Elimina una notificación por su ID
+                 this.notifications = this.notifications.filter(n => n.id !== id);
+             },
+             select(event) {
+                 // Selecciona todo el texto dentro de un elemento (usado en bloques de código)
+                 try {
+                     const range = document.createRange();
+                     range.selectNodeContents(event.target); // Selecciona contenido del nodo clickeado
+                     const selection = window.getSelection();
+                     selection.removeAllRanges(); // Limpia selección anterior
+                     selection.addRange(range); // Aplica nueva selección
+                 } catch (err) {
+                     console.warn("Error al seleccionar texto:", err);
+                     // Fallback simple si falla (puede no funcionar en todos los casos)
+                      try { event.target.select(); } catch(e) {}
+                 }
+             },
+             async copyTextToClipboard(text, successMessage) {
+                 // Copia texto al portapapeles usando la API moderna (asíncrona)
+                 if (!navigator.clipboard) {
+                     this.showNotification("La copia al portapapeles no está soportada o permitida en este navegador/contexto.", "is-warning");
+                     return false; // Indica fallo
+                 }
+                 try {
+                     await navigator.clipboard.writeText(text); // Intenta escribir texto
+                     this.showNotification(successMessage, "is-success", 2500); // Notificación éxito
+                     return true; // Indica éxito
+                 } catch (err) {
+                     console.error("Error al copiar al portapapeles: ", err);
+                     this.showNotification("Error al copiar al portapapeles. Revisa los permisos del navegador.", "is-danger");
+                     return false; // Indica fallo
+                 }
+             },
+             copyClientConf(ipSuffix) {
+                 const client = this.clients[ipSuffix]; if (!client) return;
+                 const content = this.generateClientConfContent(ipSuffix);
+                 if (!content || content.startsWith('# Error')) { this.showNotification("Error al generar .conf para copiar.", "is-danger"); return; }
+                 this.copyTextToClipboard(content, `Configuración .conf para ${client.name} copiada.`);
+             },
+             copyMikrotikScript(ipSuffix) {
+                 const client = this.clients[ipSuffix]; if (!client) return;
+                 const content = this.generateMikrotikClientScript(ipSuffix);
+                 if (!content || content.startsWith('# Error')) { this.showNotification("Error al generar .rsc para copiar.", "is-danger"); return; }
+                 this.copyTextToClipboard(content, `Script .rsc para ${client.name} copiado.`);
+             },
+             copyServerConfig() {
+                 if (!this.serverConfigMikrotik || this.serverConfigMikrotik.startsWith('# Error')) { this.showNotification("Error al generar el script del servidor para copiar.", "is-danger"); return; }
+                 this.copyTextToClipboard(this.serverConfigMikrotik, "Script completo del servidor MikroTik copiado.");
+             },
+
+            // -------------------------------------
+            // --- Renderizado de QR en Modal ---
+            // -------------------------------------
+            renderQrCodeForModal(ipSuffix) {
+                const client = this.clients[ipSuffix];
+                const qrContainerId = 'qrModalContainer' + ipSuffix;
+                const qrContainer = document.getElementById(qrContainerId);
+
+                // Verifica si el contenedor existe y si hay datos del cliente
+                if (!qrContainer || !client) {
+                    console.warn(`No se pudo renderizar QR: Contenedor #${qrContainerId} o cliente ${ipSuffix} no encontrado.`);
+                    if (qrContainer) qrContainer.innerHTML = '<div class="qr-error-message">Error: Cliente no encontrado</div>';
+                    return;
+                }
+
+                // Genera el texto de configuración para el QR
+                const configText = this.generateClientConfContent(ipSuffix);
+                qrContainer.innerHTML = ''; // Limpia contenido anterior
+
+                // Si la configuración es válida, intenta generar el QR
+                if (configText && !configText.startsWith('# Error')) {
+                    try {
+                        const options = { render: 'canvas', crisp: true, text: configText, size: 240, /* Tamaño ajustado */ fill: '#000', back: '#fff', quiet: 1, ecLevel: 'L' };
+                        qrContainer.appendChild(kjua(options)); // Añade el canvas al contenedor
+                    } catch (err) {
+                        console.error(`Error renderizando QR para ${ipSuffix} con kjua:`, err);
+                        qrContainer.innerHTML = '<div class="qr-error-message">Error al generar QR</div>';
+                    }
+                } else {
+                    // Muestra mensaje de error si la configuración falló
+                    console.warn(`No se pudo generar QR para ${ipSuffix}: configuración inválida.`);
+                    qrContainer.innerHTML = '<div class="qr-error-message">Error en Configuración</div>';
+                }
+            },
+        },
+        watch: {
+            // --- Observadores para reaccionar a cambios en los datos ---
+            'serverkeys.privateKey'(newVal, oldVal) {
+                 // Recalcula la llave pública cuando cambia la privada
+                 if (!this.checkWireguardJS()) { this.$set(this.serverkeys, 'publicKey', 'Error: wireguard.js no cargado'); return; }
+                 if (!newVal) { this.$set(this.serverkeys, 'publicKey', ''); return; } // Limpia pública si privada se vacía
+
+                 try {
+                     const publicKey = wireguard.publicKey(newVal);
+                     // Valida formato básico de llave WG (Base64, 44 chars, termina en '=')
+                     if (publicKey && /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/.test(publicKey)) {
+                         this.$set(this.serverkeys, 'publicKey', publicKey);
+                         // Si ya estamos en pasos avanzados y la llave *realmente* cambió, regenerar
+                         if (this.currentStep >= 6 && oldVal && oldVal !== newVal) {
+                             this.generateServerConfigScript(); // Regenera script servidor
+                         }
+                     } else {
+                         this.$set(this.serverkeys, 'publicKey', 'Llave privada inválida'); // Indica error en UI
+                     }
+                 } catch (e) {
+                     console.error("Error derivando llave pública:", e);
+                     this.$set(this.serverkeys, 'publicKey', 'Error al derivar llave'); // Indica error en UI
+                 }
+             },
+            // Observa cambios profundos en el objeto 'clients'
+            clients: {
+                handler() {
+                    // Regenera el script del servidor si estamos en la última página cuando cambian los clientes
+                    if (this.currentStep === this.totalSteps) {
+                        this.generateServerConfigScript();
+                    }
+                },
+                deep: true // Necesario para detectar cambios dentro de los objetos cliente
+            },
+            // Observa cambios en datos clave que afectan al script del servidor
+            interfacename() { if (this.currentStep === this.totalSteps) this.generateServerConfigScript(); },
+            port() { if (this.currentStep === this.totalSteps) this.generateServerConfigScript(); },
+            network() { if (this.currentStep === this.totalSteps) this.generateServerConfigScript(); },
+            // Observa cambios que afectan a la configuración del cliente (y potencialmente al servidor por rutas)
+            allowednets() { if (this.currentStep === this.totalSteps) this.generateServerConfigScript(); },
+            dns() { /* DNS solo afecta cliente, no necesita regenerar script servidor, pero sí las configs de cliente */ }
+        },
+        mounted() {
+            // Se ejecuta cuando la instancia Vue se monta en el DOM
+            console.log("Asistente WireGuard v2.4.1 Montado. Listo.");
+            // Verifica wireguard.js al inicio
+            if (this.checkWireguardJS()) {
+                // Si no hay llave privada al inicio, genera una silenciosamente
+                if (!this.serverkeys.privateKey) {
+                    this.generateServerKeys(true);
+                }
+                // Si hay privada pero no pública (ej. pegada antes de cargar JS), calcula la pública
+                else if (!this.serverkeys.publicKey && this.serverkeys.privateKey) {
+                     try {
+                        const pub = wireguard.publicKey(this.serverkeys.privateKey);
+                        this.$set(this.serverkeys, 'publicKey', pub || 'Error al derivar llave');
+                    } catch(e) {
+                         this.$set(this.serverkeys, 'publicKey', 'Error al derivar llave');
+                    }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
+
+
+
