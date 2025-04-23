@@ -118,7 +118,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 ## 👤 Autor
 
 *   **Flavio González by Infratec Networks**
-*   Sitio Web: [https://infratec.com.uy](https://infratec.com.uy)
+*   Sitio Web: [https://infratec.com.uy](https://infratec.com.uy/wg)
 
 ---
 
