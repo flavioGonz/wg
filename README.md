@@ -27,12 +27,12 @@ Una herramienta web sencilla y potente para generar configuraciones de WireGuard
     git clone https://github.com/tu-usuario/tu-repositorio.git
     cd tu-repositorio
     ```
-2.  **Asegura las Dependencias:** Verifica que los siguientes archivos estén presentes en la misma carpeta que `index.html`:
+2.  **Asegura las Dependencias:** Verifica que los siguientes archivos estén presentes en la misma carpeta que `wcg-1.0.html`:
     *   `wireguard.js` (¡**Esencial** para la generación de claves!)
     *   `logo.png`
     *   `wg-private.png`
     *   `favicon.ico`
-3.  **Abre el Asistente:** Abre el archivo `index.html` en tu navegador web preferido.
+3.  **Abre el Asistente:** Abre el archivo `wcg-1.0.html` en tu navegador web preferido.
 4.  **Sigue los Pasos:** Completa la información solicitada en cada paso del asistente:
     *   Datos del Servidor (IP/Dominio, Puerto, Nombre Interfaz MikroTik)
     *   Red VPN (Subred, IP inicial, Nº Clientes)
@@ -119,6 +119,29 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 *   **Flavio González by Infratec Networks**
 *   Sitio Web: [https://infratec.com.uy](https://infratec.com.uy/wg)
+*   
+## 📝 Licencia
+
+*   **MT Licence**
+*   Copyright (c) 2025 Flavio Gonzalez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the “Software”), to deal
+in the Software without restriction, including without limitation the rights  
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      
+copies of the Software, and to permit persons to whom the Software is         
+furnished to do so, subject to the following conditions:                       
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.                                
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+SOFTWARE.
 
 ---
 
