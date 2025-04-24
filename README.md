@@ -4,7 +4,7 @@
 
 Una herramienta web sencilla y potente para generar configuraciones de WireGuard®, con un enfoque especial en scripts para **MikroTik RouterOS**, pero también generando formatos estándar (`.conf`) y códigos QR.
 
-**Toda la generación de claves y configuraciones se realiza localmente en tu navegador.** Ningún dato sensible se envía a servidores externos.
+**🔒 Toda la generación de claves y configuraciones se realiza localmente en tu navegador.** Ningún dato sensible se envía a servidores externos.
 
 ## ✨ Características Principales
 
@@ -114,7 +114,7 @@ Las contribuciones son bienvenidas. Si encuentras un error o tienes una sugerenc
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles (***Nota:** Asegúrate de añadir un archivo LICENSE, por ejemplo, MIT*).
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
 ## 👤 Autor
 
