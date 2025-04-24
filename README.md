@@ -24,8 +24,8 @@ Una herramienta web sencilla y potente para generar configuraciones de WireGuard
 
 1.  **Clona o Descarga:** Obtén los archivos del repositorio.
     ```bash
-    git clone https://github.com/tu-usuario/tu-repositorio.git
-    cd tu-repositorio
+    git clone https://github.com/flavioGonz/wg.git
+    cd wg
     ```
 2.  **Asegura las Dependencias:** Verifica que los siguientes archivos estén presentes en la misma carpeta que `wcg-1.0.html`:
     *   `wireguard.js` (¡**Esencial** para la generación de claves!)
