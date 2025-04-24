@@ -119,7 +119,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 *   **Flavio González by Infratec Networks**
 *   Sitio Web: [https://infratec.com.uy](https://infratec.com.uy/wg)
-*   
+*   WSP: +59899185402
 ## 📝 Licencia
 
 *   **MT Licence**
