@@ -23,23 +23,24 @@ Una herramienta web sencilla y potente para generar configuraciones de WireGuard
 ## 🚀 Cómo Usar
 
 1.  **Clona o Descarga:** Obtén los archivos del repositorio.
+2.  https://infratec.com.uy/wg (versión online)
     ```bash
     git clone https://github.com/flavioGonz/wg.git
     cd wg
     ```
-2.  **Asegura las Dependencias:** Verifica que los siguientes archivos estén presentes en la misma carpeta que `wcg-1.0.html`:
+3.  **Asegura las Dependencias:** Verifica que los siguientes archivos estén presentes en la misma carpeta que `wcg-1.0.html`:
     *   `wireguard.js` (¡**Esencial** para la generación de claves!)
     *   `logo.png`
     *   `wg-private.png`
     *   `favicon.ico`
-3.  **Abre el Asistente:** Abre el archivo `wcg-1.0.html` en tu navegador web preferido.
-4.  **Sigue los Pasos:** Completa la información solicitada en cada paso del asistente:
+4.  **Abre el Asistente:** Abre el archivo `wcg-1.0.html` en tu navegador web preferido.
+5.  **Sigue los Pasos:** Completa la información solicitada en cada paso del asistente:
     *   Datos del Servidor (IP/Dominio, Puerto, Nombre Interfaz MikroTik)
     *   Red VPN (Subred, IP inicial, Nº Clientes)
     *   Configuración Clientes (DNS, AllowedIPs)
     *   Llaves del Servidor (Genera nuevas o pega una existente)
     *   Revisa el Resumen.
-5.  **Genera y Utiliza:** Haz clic en "Generar Configs" para ir a la pantalla de resultados. Desde allí puedes:
+6.  **Genera y Utiliza:** Haz clic en "Generar Configs" para ir a la pantalla de resultados. Desde allí puedes:
     *   Copiar los scripts para MikroTik.
     *   Descargar archivos `.conf`, `.rsc`, QR, o ZIPs.
     *   Guardar el perfil completo como `.json`.
